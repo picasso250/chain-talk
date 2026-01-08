@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# 处理 SPA 路由，防止刷新页面 404
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
