@@ -1,13 +1,34 @@
 <script>
   import { onMount } from "svelte";
   import { ethers } from "ethers";
-  import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./lib/constants";
+  import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./lib/constants";
 
   let account = $state(null);
   let diaryContent = $state("");
   let entries = $state([]);
   let loading = $state(false);
   let isConnecting = $state(false);
+
+  // 检查并切换网络
+  async function checkNetwork() {
+    if (!window.ethereum) return;
+    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== TARGET_CHAIN_ID) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: TARGET_CHAIN_ID }],
+        });
+        return true;
+      } catch (switchError) {
+        // 如果网络不存在（通常 Arbitrum 都在 MetaMask 默认列表中，但防万一），可以添加 wallet_addEthereumChain 逻辑
+        console.error("Failed to switch network:", switchError);
+        alert("Please switch your wallet to Arbitrum One network.");
+        return false;
+      }
+    }
+    return true;
+  }
 
   // 连接钱包
   async function connectWallet() {
@@ -17,9 +38,16 @@
     }
     isConnecting = true;
     try {
+      // 1. 先确保在正确的网络
+      const isCorrectNetwork = await checkNetwork();
+      if (!isCorrectNetwork) return;
+
+      // 2. 获取账号
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       account = await signer.getAddress();
+      
+      // 3. 读取数据
       await fetchEntries();
     } catch (error) {
       console.error("Connection failed:", error);
@@ -188,7 +216,7 @@
             <span class="text-red-400 font-bold">{entry.timestamp}</span>
             <span class="font-mono">{entry.user.slice(0, 8)}</span>
             <a 
-              href={`https://sepolia.arbiscan.io/tx/${entry.hash}`} 
+              href={`https://arbiscan.io/tx/${entry.hash}`} 
               target="_blank" 
               class="hover:text-stone-300 hover:underline decoration-stone-700"
             >
