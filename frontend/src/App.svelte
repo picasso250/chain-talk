@@ -2,11 +2,11 @@
   import { onMount } from "svelte";
   import { ethers } from "ethers";
   import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./lib/constants";
+  import ReplySection from "./lib/ReplySection.svelte";
 
   let account = $state(null);
   let topicContent = $state("");
   let topics = $state([]);
-  let replies = $state([]);
   let expandedTopics = $state(new Set());
   let loading = $state(false);
   let isConnecting = $state(false);
@@ -24,7 +24,7 @@
         return true;
       } catch (switchError) {
         console.error("Failed to switch network:", switchError);
-        alert("Please switch your wallet to Arbitrum One network.");
+        alert("Please switch your wallet to Sepolia network.");
         return false;
       }
     }
@@ -47,7 +47,6 @@
       account = await signer.getAddress();
       
       await fetchTopics();
-      await fetchReplies();
     } catch (error) {
       console.error("Connection failed:", error);
     } finally {
@@ -84,31 +83,6 @@
     }
   }
 
-  // 创建回复
-  async function createReply(topicId, replyContent) {
-    if (!replyContent.trim()) return;
-    if (!account) {
-      await connectWallet();
-      if (!account) return;
-    }
-
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-      const tx = await contract.createReply(topicId, replyContent);
-      console.log("Transaction sent:", tx.hash);
-      
-      await tx.wait();
-      
-      await fetchReplies();
-    } catch (error) {
-      console.error("Create reply failed:", error);
-      alert("Failed to create reply. See console for details.");
-    }
-  }
-
   // 获取标题（第一行，最多100字符）
   function getTitle(content) {
     const firstLine = content.split('\n')[0];
@@ -123,11 +97,6 @@
       expandedTopics.add(topicId);
     }
     expandedTopics = new Set(expandedTopics);
-  }
-
-  // 获取主题的回复
-  function getTopicReplies(topicId) {
-    return replies.filter(reply => reply.topicId === topicId);
   }
 
   // 读取主题
@@ -162,39 +131,6 @@
     }
   }
 
-  // 读取回复
-  async function fetchReplies() {
-    try {
-      let provider;
-      if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-      } else {
-        return;
-      }
-
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      
-      const filter = contract.filters.ReplyCreated();
-      const logs = await contract.queryFilter(filter);
-
-      const parsedLogs = logs.map(log => {
-        return {
-          replyId: log.args[0],
-          topicId: log.args[1],
-          author: log.args[2],
-          timestamp: new Date(Number(log.args[3]) * 1000).toLocaleString(),
-          content: log.args[4],
-          blockNumber: log.blockNumber,
-          hash: log.transactionHash
-        };
-      });
-
-      replies = parsedLogs.reverse();
-    } catch (error) {
-      console.error("Fetch replies failed:", error);
-    }
-  }
-
   onMount(() => {
     if (window.ethereum) {
        window.ethereum.on('accountsChanged', (accounts) => {
@@ -205,13 +141,12 @@
          }
        });
        fetchTopics();
-       fetchReplies();
     }
   });
 </script>
 
 <main class="min-h-screen bg-stone-900 text-stone-200 font-mono selection:bg-red-900 selection:text-white">
-  <!-- Navbar -->
+  <!--Navbar -->
   <nav class="border-b border-stone-800 p-4 sticky top-0 bg-stone-900/95 backdrop-blur z-10">
     <div class="max-w-3xl mx-auto flex justify-between items-center">
       <h1 class="text-xl font-bold tracking-tighter text-red-500 uppercase">
@@ -291,9 +226,8 @@
                 <div class="flex items-center gap-4 text-xs text-stone-500">
                   <span class="text-red-400 font-bold">{topic.timestamp}</span>
                   <span class="font-mono">{topic.author.slice(0, 8)}</span>
-                  <span>{getTopicReplies(topic.topicId).length} replies</span>
                   <a 
-                    href={`https://arbiscan.io/tx/${topic.hash}`} 
+                    href="https://sepolia.etherscan.io/tx/{topic.hash}" 
                     target="_blank" 
                     class="hover:text-stone-300 hover:underline decoration-stone-700"
                     onclick={(e) => e.stopPropagation()}
@@ -320,43 +254,7 @@
                 </div>
               </div>
 
-              <!-- Replies -->
-              <div class="p-4 space-y-4">
-                <div class="text-sm font-bold text-stone-400 mb-3">Replies</div>
-                
-                {#each getTopicReplies(topic.topicId) as reply (reply.hash)}
-                  <div class="pl-4 border-l-2 border-stone-700">
-                    <div class="flex items-center gap-3 text-xs text-stone-500 mb-2">
-                      <span class="text-red-400 font-bold">{reply.timestamp}</span>
-                      <span class="font-mono">{reply.author.slice(0, 8)}</span>
-                      <a 
-                        href={`https://arbiscan.io/tx/${reply.hash}`} 
-                        target="_blank" 
-                        class="hover:text-stone-300 hover:underline decoration-stone-700"
-                      >
-                        #{reply.blockNumber}
-                      </a>
-                    </div>
-                    <div class="prose prose-invert prose-stone max-w-none">
-                      <p class="whitespace-pre-wrap leading-relaxed text-stone-300">
-                        {reply.content}
-                      </p>
-                    </div>
-                  </div>
-                {/each}
-
-                <!-- Reply Form -->
-                {#if account}
-                  <ReplyForm 
-                    topicId={topic.topicId} 
-                    onCreateReply={createReply} 
-                  />
-                {:else}
-                  <div class="text-center py-4 text-stone-500 text-sm">
-                    Connect wallet to reply
-                  </div>
-                {/if}
-              </div>
+              <ReplySection topicId={topic.topicId} {account} />
             </div>
           {/if}
         </article>

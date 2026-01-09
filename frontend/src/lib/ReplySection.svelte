@@ -1,0 +1,157 @@
+<script>
+  import { onMount } from "svelte";
+  import { ethers } from "ethers";
+  import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants";
+
+  let { topicId, account } = $props();
+
+  let replies = $state([]);
+  let replyContent = $state("");
+  let loading = $state(false);
+  let submitting = $state(false);
+
+  // 获取回复
+  async function fetchReplies() {
+    loading = true;
+    try {
+      let provider;
+      if (window.ethereum) {
+        provider = new ethers.BrowserProvider(window.ethereum);
+      } else {
+        // Fallback provider or read-only provider could be added here
+        // For now, we rely on window.ethereum or just return if not present
+        // (though read-only implies we might want a public RPC url if wallet not connected)
+        // But consistent with App.svelte, we'll try to use window.ethereum if available.
+        // If not, we can't read from chain unless we have an RPC URL.
+        // Assuming user has a wallet or we just don't show replies.
+        if (!window.ethereum) return;
+        return; 
+      }
+
+      // 为了读取数据，不需要 signer，只需要 provider
+      // 但如果 window.ethereum 存在，BrowserProvider 就可以工作
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      
+      // 过滤特定 topicId 的回复
+      // ReplyCreated(uint256 indexed replyId, uint256 indexed topicId, ...)
+      // arg0: replyId (skip), arg1: topicId (match)
+      const filter = contract.filters.ReplyCreated(null, topicId);
+      const logs = await contract.queryFilter(filter);
+
+      const parsedLogs = logs.map(log => {
+        return {
+          replyId: log.args[0],
+          topicId: log.args[1],
+          author: log.args[2],
+          timestamp: new Date(Number(log.args[3]) * 1000).toLocaleString(),
+          content: log.args[4],
+          blockNumber: log.blockNumber,
+          hash: log.transactionHash
+        };
+      });
+
+      replies = parsedLogs.reverse();
+    } catch (error) {
+      console.error("Fetch replies failed:", error);
+    } finally {
+      loading = false;
+    }
+  }
+
+  // 提交回复
+  async function submitReply() {
+    if (!replyContent.trim()) return;
+    
+    submitting = true;
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      const tx = await contract.createReply(topicId, replyContent);
+      console.log("Reply transaction sent:", tx.hash);
+      
+      await tx.wait();
+      
+      replyContent = "";
+      await fetchReplies(); // 刷新列表
+    } catch (error) {
+      console.error("Create reply failed:", error);
+      alert("Failed to create reply. See console for details.");
+    } finally {
+      submitting = false;
+    }
+  }
+
+  onMount(() => {
+    fetchReplies();
+  });
+</script>
+
+<div class="border-t border-stone-800 bg-stone-900/30">
+  <!-- Replies List -->
+  <div class="p-4 space-y-4">
+    <div class="flex items-center justify-between">
+        <div class="text-sm font-bold text-stone-400">
+            Replies {#if loading}<span class="text-xs font-normal opacity-50 ml-2">loading...</span>{/if}
+        </div>
+        {#if replies.length > 0}
+            <div class="text-xs text-stone-600">{replies.length} comments</div>
+        {/if}
+    </div>
+    
+    {#if replies.length === 0 && !loading}
+        <div class="text-stone-600 text-sm italic py-2">No replies yet.</div>
+    {/if}
+
+    {#each replies as reply (reply.hash)}
+      <div class="pl-4 border-l-2 border-stone-700 hover:border-red-900/50 transition-colors">
+        <div class="flex items-center gap-3 text-xs text-stone-500 mb-2">
+          <span class="text-red-400 font-bold">{reply.timestamp}</span>
+          <span class="font-mono" title={reply.author}>{reply.author.slice(0, 8)}...</span>
+          <a 
+            href={`https://sepolia.etherscan.io/tx/${reply.hash}`} 
+            target="_blank" 
+            class="hover:text-stone-300 hover:underline decoration-stone-700"
+          >
+            #{reply.blockNumber}
+          </a>
+        </div>
+        <div class="prose prose-invert prose-stone max-w-none">
+          <p class="whitespace-pre-wrap leading-relaxed text-stone-300 text-sm">
+            {reply.content}
+          </p>
+        </div>
+      </div>
+    {/each}
+  </div>
+
+  <!-- Reply Input -->
+  <div class="p-4 pt-0">
+    {#if account}
+      <div class="relative group mt-2">
+        <div class="absolute -inset-0.5 bg-gradient-to-r from-stone-800 to-stone-900 rounded opacity-20 group-hover:opacity-40 transition duration-300 blur"></div>
+        <div class="relative bg-stone-800/50 p-4 rounded border border-stone-700">
+          <textarea
+            bind:value={replyContent}
+            placeholder="Write a reply..."
+            class="w-full bg-transparent text-sm outline-none resize-none h-20 placeholder-stone-600"
+          ></textarea>
+          <div class="flex justify-end mt-3">
+            <button 
+              onclick={submitReply}
+              disabled={!replyContent.trim() || submitting}
+              class="bg-stone-700 text-stone-300 hover:bg-red-600 hover:text-white px-4 py-1 text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'REPLYING...' : 'REPLY'}
+            </button>
+          </div>
+        </div>
+      </div>
+    {:else}
+      <div class="text-center py-6 border-t border-stone-800/50">
+        <span class="text-stone-500 text-sm">Connect wallet to join the conversation</span>
+      </div>
+    {/if}
+  </div>
+</div>
