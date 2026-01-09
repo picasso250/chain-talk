@@ -2,23 +2,48 @@
 pragma solidity 0.8.30;
 
 /**
- * @title OnChainDiary
- * @dev Arbitrum 上的反修正主义内容网络。
- *      没有“删除键”，没有“修改键”，只有不可篡改的历史。
+ * @title ChainTalk
+ * @dev 链上极简论坛 - 永恒对话，链上留声
+ *      没有删除键，没有修改键，只有不可篡改的讨论
  */
-contract OnChainDiary {
-    // 每一条记录都是一个永久的事件日志
-    event EntryCreated(
-        address indexed user, 
-        uint256 timestamp, 
+contract ChainTalk {
+    // 主题ID计数器
+    uint256 private _topicIdCounter;
+    uint256 private _replyIdCounter;
+    
+    // 主题创建事件
+    event TopicCreated(
+        uint256 indexed topicId,
+        address indexed author,
+        uint256 timestamp,
+        string content
+    );
+    
+    // 回复创建事件
+    event ReplyCreated(
+        uint256 indexed replyId,
+        uint256 indexed topicId,
+        address indexed author,
+        uint256 timestamp,
         string content
     );
 
     /**
-     * @dev 写入一条不可篡改的公开内容
-     * @param _content 明文内容
+     * @dev 创建一个新的讨论主题
+     * @param _content 主题内容
      */
-    function writeEntry(string memory _content) public {
-        emit EntryCreated(msg.sender, block.timestamp, _content);
+    function createTopic(string memory _content) public {
+        _topicIdCounter++;
+        emit TopicCreated(_topicIdCounter, msg.sender, block.timestamp, _content);
+    }
+
+    /**
+     * @dev 回复一个讨论主题
+     * @param _topicId 主题ID
+     * @param _content 回复内容
+     */
+    function createReply(uint256 _topicId, string memory _content) public {
+        _replyIdCounter++;
+        emit ReplyCreated(_replyIdCounter, _topicId, msg.sender, block.timestamp, _content);
     }
 }
