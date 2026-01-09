@@ -1,13 +1,13 @@
 const hre = require("hardhat");
 
 async function main() {
-  const OnChainDiary = await hre.ethers.getContractFactory("OnChainDiary");
-  const diary = await OnChainDiary.deploy();
+  const ChainTalk = await hre.ethers.getContractFactory("ChainTalk");
+  const chainTalk = await ChainTalk.deploy();
 
-  await diary.waitForDeployment();
+  await chainTalk.waitForDeployment();
 
   console.log(
-    `OnChainDiary deployed to: ${await diary.getAddress()}`
+    `ChainTalk deployed to: ${await chainTalk.getAddress()}`
   );
 }
 
