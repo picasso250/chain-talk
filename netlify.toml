@@ -1,6 +1,7 @@
 [build]
-  command = "cd frontend && npm run build"
-  publish = "frontend/dist"
+  base = "frontend"
+  publish = "dist"
+  command = "npm run build"
 
 # 处理 SPA 路由，防止刷新页面 404
 [[redirects]]
