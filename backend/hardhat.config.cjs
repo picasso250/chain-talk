@@ -14,5 +14,18 @@ module.exports = {
       url: process.env.ARBITRUM_RPC_URL || "",
       accounts: process.env.ARBITRUM_PRIVATE_KEY ? [process.env.ARBITRUM_PRIVATE_KEY] : [],
     }
+  },
+  etherscan: {
+    apiKey: process.env.ARBISCAN_API_KEY,
+    customChains: [
+      {
+        network: "arbitrum",
+        chainId: 42161,
+        urls: {
+          apiURL: "https://api.arbiscan.io/api",
+          browserURL: "https://arbiscan.io"
+        }
+      }
+    ]
   }
 };
