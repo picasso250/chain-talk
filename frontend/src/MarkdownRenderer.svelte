@@ -3,7 +3,10 @@
   import DOMPurify from 'dompurify';
   
   let { content = '' } = $props();
-  const htmlContent = $derived(DOMPurify.sanitize(marked(content)));
+  
+  // Configure marked to treat single line breaks as <br>
+  marked.use({ breaks: true });
+  const htmlContent = $derived(DOMPurify.sanitize(marked.parse(content)));
 </script>
 
 <div class="prose">
