@@ -237,7 +237,12 @@
           <textarea
             bind:value={topicContent}
             placeholder="Start a conversation. First line becomes the title..."
-            class="w-full bg-transparent text-base outline-none resize-none h-24 placeholder-gray-400 leading-relaxed"
+            class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
+            style="height: auto; min-height: 96px; max-height: 256px;"
+            oninput={(e) => {
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 96), 256) + 'px';
+            }}
           ></textarea>
           <div
             class="flex justify-between items-center mt-4 border-t border-stone-900 pt-4"
