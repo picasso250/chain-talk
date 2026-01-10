@@ -1,8 +1,8 @@
 <script>
   import { onMount } from "svelte";
   import { ethers } from "ethers";
-  import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./lib/constants";
-  import ReplySection from "./lib/ReplySection.svelte";
+  import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./constants";
+  import ReplySection from "./ReplySection.svelte";
 
   let account = $state(null);
   let topicContent = $state("");
