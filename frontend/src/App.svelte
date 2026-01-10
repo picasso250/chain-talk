@@ -12,6 +12,7 @@
   let expandedTopics = $state(new Set());
   let loading = $state(false);
   let isConnecting = $state(false);
+  let isPreviewMode = $state(false);
 
   // 检查并切换网络
   async function checkNetwork() {
@@ -234,16 +235,52 @@
         <div
           class="relative bg-white p-6 rounded border border-gray-200 shadow-sm"
         >
-          <textarea
-            bind:value={topicContent}
-            placeholder="Start a conversation. First line becomes the title..."
-            class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
-            style="height: auto; min-height: 96px; max-height: 256px;"
-            oninput={(e) => {
-              e.target.style.height = 'auto';
-              e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 96), 256) + 'px';
-            }}
-          ></textarea>
+           <!-- Toggle Buttons -->
+           <div class="flex gap-2 mb-3">
+             <button
+               class="px-3 py-1 text-sm font-medium transition-colors rounded-md"
+               class:bg-green-100={!isPreviewMode}
+               class:text-green-700={!isPreviewMode}
+               class:bg-gray-100={isPreviewMode}
+               class:text-gray-600={isPreviewMode}
+               onclick={() => isPreviewMode = false}
+             >
+               Edit
+             </button>
+             <button
+               class="px-3 py-1 text-sm font-medium transition-colors rounded-md"
+               class:bg-green-100={isPreviewMode}
+               class:text-green-700={isPreviewMode}
+               class:bg-gray-100={!isPreviewMode}
+               class:text-gray-600={!isPreviewMode}
+               onclick={() => isPreviewMode = true}
+             >
+               Preview
+             </button>
+           </div>
+
+           {#if isPreviewMode}
+             <!-- Preview Mode -->
+             <div class="min-h-24 max-h-64 overflow-y-auto p-3 bg-gray-50 rounded border border-gray-200">
+               {#if topicContent.trim()}
+                 <MarkdownRenderer content={topicContent} />
+               {:else}
+                 <p class="text-gray-400 italic">Nothing to preview...</p>
+               {/if}
+             </div>
+           {:else}
+             <!-- Edit Mode -->
+             <textarea
+               bind:value={topicContent}
+               placeholder="Start a conversation. First line becomes the title..."
+               class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
+               style="height: auto; min-height: 96px; max-height: 256px;"
+               oninput={(e) => {
+                 e.target.style.height = 'auto';
+                 e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 96), 256) + 'px';
+               }}
+             ></textarea>
+           {/if}
           <div
             class="flex justify-between items-center mt-4 border-t border-stone-900 pt-4"
           >
