@@ -16,9 +16,11 @@ contract ChainTalk is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // 主题ID计数器
     uint256 private _topicIdCounter;
     
-    // === 预留存储槽 (v0.1.0) ===
-    // 为未来升级预留的存储空间
-    uint256[50] private __gap; // 预留50个槽位用于未来升级
+    // === 升级存储 (v0.2.0) ===
+    // 使用预留存储槽添加新功能
+    mapping(uint256 => uint256) private _replyCounts; // 每个主题的回复数量
+    uint256 private _replyIdCounter; // 全局回复ID计数器
+    uint256[48] private __gap; // 剩余48个槽位继续预留
     
     // 主题创建事件
     event TopicCreated(
@@ -43,6 +45,7 @@ contract ChainTalk is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function initialize() public initializer {
         __Ownable_init(msg.sender);
         _topicIdCounter = 0;
+        _replyIdCounter = 0; // v0.2.0 新增初始化
     }
 
     /**
@@ -60,10 +63,9 @@ contract ChainTalk is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      * @param _content 回复内容
      */
     function createReply(uint256 _topicId, string memory _content) public {
-        // 简单的回复ID生成策略：topicId * 1M + replyNumber
-        // 后续升级可以改进为全局唯一ID
-        uint256 replyId = _topicId * 1000000 + 1;
-        emit ReplyCreated(replyId, _topicId, msg.sender, block.timestamp, _content);
+        _replyIdCounter++;
+        _replyCounts[_topicId]++;
+        emit ReplyCreated(_replyIdCounter, _topicId, msg.sender, block.timestamp, _content);
     }
 
     /**
@@ -71,6 +73,21 @@ contract ChainTalk is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      */
     function getTopicIdCounter() public view returns (uint256) {
         return _topicIdCounter;
+    }
+
+    /**
+     * @dev 获取指定主题的回复数量 (v0.2.0 新增)
+     * @param _topicId 主题ID
+     */
+    function getReplyCount(uint256 _topicId) public view returns (uint256) {
+        return _replyCounts[_topicId];
+    }
+
+    /**
+     * @dev 获取当前回复ID计数器 (v0.2.0 新增)
+     */
+    function getReplyIdCounter() public view returns (uint256) {
+        return _replyIdCounter;
     }
 
     /**
@@ -82,6 +99,6 @@ contract ChainTalk is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      * @dev 获取合约版本
      */
     function version() public pure returns (string memory) {
-        return "0.1.0";
+        return "0.2.0";
     }
 }
