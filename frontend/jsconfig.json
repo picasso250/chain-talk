@@ -15,15 +15,12 @@
      * To have warnings / errors of the Svelte compiler at the
      * correct position, enable source maps by default.
      */
-    "sourceMap": true,
-    "esModuleInterop": true,
     "types": ["vite/client"],
-    "skipLibCheck": true,
     /**
      * Typecheck JS in `.svelte` and `.js` files by default.
      * Disable this if you'd like to use dynamic types.
      */
-    "checkJs": true
+    "checkJs": false
   },
   /**
    * Use global.d.ts instead of compilerOptions.types

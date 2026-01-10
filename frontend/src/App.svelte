@@ -214,9 +214,11 @@
       {#each topics as topic (topic.hash)}
         <article class="border border-stone-800 rounded overflow-hidden hover:border-red-900 transition-colors duration-300">
           <!-- Topic Header (Always Visible) -->
-          <div 
-            class="p-4 cursor-pointer hover:bg-stone-800/50 transition-colors"
+          <button 
+            type="button"
+            class="w-full p-4 cursor-pointer hover:bg-stone-800/50 transition-colors text-left"
             onclick={() => toggleTopic(topic.topicId)}
+            onkeydown={(e) => e.key === 'Enter' && toggleTopic(topic.topicId)}
           >
             <div class="flex justify-between items-start">
               <div class="flex-1">
@@ -240,7 +242,7 @@
                 {expandedTopics.has(topic.topicId) ? '▼' : '▶'}
               </div>
             </div>
-          </div>
+          </button>
 
           <!-- Expanded Content -->
           {#if expandedTopics.has(topic.topicId)}
