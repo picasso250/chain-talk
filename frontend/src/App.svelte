@@ -4,6 +4,7 @@
   import { ethers } from "ethers";
   import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./constants";
   import ReplySection from "./ReplySection.svelte";
+  import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
   let account = $state(null);
   let topicContent = $state("");
@@ -273,11 +274,7 @@
             >
               <!-- Topic Content -->
               <div class="p-4 bg-gray-50">
-                <div class="prose max-w-none">
-                  <p class="whitespace-pre-wrap leading-relaxed text-gray-700">
-                    {topic.content}
-                  </p>
-                </div>
+                <MarkdownRenderer content={topic.content} />
               </div>
 
               <ReplySection topicId={topic.topicId} {account} />

@@ -18,6 +18,9 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
-    "ethers": "^6.16.0"
+    "@tailwindcss/typography": "^0.5.19",
+    "dompurify": "^3.0.0",
+    "ethers": "^6.16.0",
+    "marked": "^12.0.0"
   }
 }

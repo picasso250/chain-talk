@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { ethers } from "ethers";
   import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants";
+  import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
   let { topicId, account } = $props();
 
@@ -119,10 +120,8 @@
             tx/{reply.hash.slice(0, 6)}...{reply.hash.slice(-6)}
           </a>
         </div>
-        <div class="prose max-w-none">
-          <p class="whitespace-pre-wrap leading-normal text-gray-700 text-sm">
-            {reply.content}
-          </p>
+        <div class="prose prose-sm max-w-none">
+          <MarkdownRenderer content={reply.content} />
         </div>
       </div>
     {/each}
