@@ -58,61 +58,81 @@
 - [x] 验证链上数据
 - [ ] 优化用户体验 (正在进行)
 
-## 第四阶段：合约升级与Arbitrum部署 (新增重点)
+## 第四阶段：合约升级与Arbitrum部署 ✅ 已完成
 
-### 步骤11：合约可升级改造
-- [ ] 使用OpenZeppelin升级模式改造合约架构
-- [ ] 实现代理合约和逻辑合约分离
-- [ ] 添加升级管理功能
-- [ ] 编写升级脚本
+### 步骤11：合约可升级改造 ✅
+- [x] 使用OpenZeppelin UUPS升级模式改造合约架构
+- [x] 实现代理合约和逻辑合约分离
+- [x] 添加升级管理功能
+- [x] 编写升级和部署脚本
 
-### 步骤12：配置Arbitrum部署环境
-- [ ] 安装配置Hardhat Arbitrum插件
-- [ ] 设置Arbitrum Sepolia测试网配置
-- [ ] 获取测试网ETH和配置部署账户
-- [ ] 验证网络连通性
+### 步骤12：配置Arbitrum部署环境 ✅
+- [x] 安装配置Hardhat Arbitrum插件
+- [x] 设置Arbitrum主网配置
+- [x] 配置部署账户和环境变量
+- [x] 验证网络连通性（使用代理）
 
-### 步骤13：部署到Arbitrum
-- [ ] 部署代理合约到Arbitrum Sepolia
-- [ ] 验证合约功能和升级流程
-- [ ] 测试完整链上功能
-- [ ] 更新前端合约地址配置
+### 步骤13：部署到Arbitrum ✅
+- [x] 部署代理合约到Arbitrum主网
+- [x] 验证合约功能和升级流程
+- [x] 测试完整链上功能
+- [x] 更新前端合约地址配置
+- [x] 前端完全迁移至Arbitrum网络
 
-## 第五阶段：V2EX 发布准备
+## 第五阶段：生产环境部署和优化 ✅ 已完成
 
-为了在 V2EX 发布并获得良好反馈，必须降低用户访问门槛。
-
-### 步骤14：实现只读模式 (Read-Only Mode)
+### 步骤14：实现只读模式 (Read-Only Mode) ✅
 - [x] **利用现有架构实现**: Ethers.js + MetaMask 自动支持只读访问模式
 - [x] **数据获取逻辑**: BrowserProvider 自动处理读取操作，无需用户授权
 - [x] **UI 状态区分**: 完善访客和用户状态的界面引导
 - [x] **天然实现了零门槛访问**: 有 MetaMask 插件即可浏览，无需连接
 
-### 步骤15：部署上线
-- [ ] 构建生产环境版本 (`npm run build`)
+### 步骤15：网络迁移和UI优化 ✅
+- [x] **前端完全迁移至Arbitrum主网**: 更新合约地址、链ID、Etherscan链接
+- [x] **构建生产环境版本**: 多次 `npm run build` 验证
+- [x] **UI网络标识集成**: Header添加Arbitrum徽章，避免用户混淆
+- [x] **用户体验优化**: 所有网络相关提示更新为Arbitrum
+
+### 步骤16：部署上线 ⏳ 进行中
+- [x] 构建生产环境版本 (`npm run build`)
 - [ ] 部署至 Netlify
 - [ ] 验证生产环境公网访问
 
-### 步骤16：社区推广 (V2EX)
-- [ ] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + Upgradable Contracts + Arbitrum)
+## 第六阶段：社区推广 (V2EX) ⏳ 待执行
+
+### 步骤17：发布准备
+- [ ] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + OpenZeppelin Upgradable + Arbitrum)
 - [ ] 准备 Demo 截图/GIF
+- [ ] 整理技术亮点清单
 - [ ] 发布并收集反馈
 
 ---
 
 ## 执行记录
 
-### 当前状态：合约可升级改造和Arbitrum部署阶段
-- **已完成**：全栈原型开发（合约+前端），功能闭环。
-- **已完成**：利用 Ethers.js + MetaMask 的天然只读特性实现零门槛访问
-- **当前任务**：将合约改造为可升级架构并部署到Arbitrum
+### 当前状态：生产环境部署阶段
+- **已完成**：全栈原型开发（合约+前端），功能闭环
+- **已完成**：Ethers.js + MetaMask 天然只读特性实现零门槛访问
+- **已完成**：OpenZeppelin UUPS 升级架构改造
+- **已完成**：Arbitrum 主网部署和前端迁移
+- **当前任务**：生产环境部署和社区推广准备
 
 ### 合约部署信息
-- **网络**：Sepolia测试网
-- **合约地址**：0xb7BAf091e545AD99e54473E6b7d09939E6d34A04
-- **Chain ID**：11155111 (0xaa36a7)
+- **网络**：Arbitrum One 主网
+- **合约地址**：0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380
+- **Chain ID**：42161 (0xa4b1)
+- **版本**：v0.2.0 (支持回复计数)
+- **交易哈希**：0x5f94350574349511cd1c50d4ae34c8bfbb93bed4411416df3fc8e8fcf7dd4406
 
 ### 技术栈亮点
-- Frontend: Svelte 5 (Runes) + Tailwind CSS + Ethers.js v6
-- Backend: Solidity 0.8.30 + Hardhat
-- Network: Arbitrum / Sepolia
+- **Frontend**: Svelte 5 (Runes) + Tailwind CSS + Ethers.js v6
+- **Backend**: Solidity 0.8.30 + Hardhat + OpenZeppelin Upgradable
+- **Architecture**: UUPS Proxy Pattern (可升级合约)
+- **Network**: Arbitrum One 主网
+- **Features**: 零门槛只读访问、链上永恒存储、可升级架构
+
+### 关键成就
+- **✅ 技术债务清零**: 所有测试网引用已清理，生产环境就绪
+- **✅ 用户体验优化**: 清晰的网络标识和Arbiscan链接
+- **✅ 可维护性**: UUPS升级架构确保未来功能扩展
+- **✅ 去中心化**: 完全运行在Arbitrum主网，无单点故障
