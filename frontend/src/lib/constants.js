@@ -1,5 +1,5 @@
-// Sepolia Testnet Deployment (Upgradeable Contract)
-export const CONTRACT_ADDRESS = "0x446A1E190Bd0F1525303b02c48C636DBB6A5D14D"; 
+// Sepolia Testnet Deployment (Upgraded to v0.2.0)
+export const CONTRACT_ADDRESS = "0xdBd31F6C024cE3433E482aa4288dc369584E31a2"; 
 
 // Sepolia Testnet Chain ID (Hex)
 export const TARGET_CHAIN_ID = "0xaa36a7"; // 11155111
@@ -102,6 +102,25 @@ export const CONTRACT_ABI = [
     "name": "createTopic",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_topicId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getReplyCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

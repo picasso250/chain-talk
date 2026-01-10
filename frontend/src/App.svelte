@@ -121,9 +121,20 @@
           timestamp: new Date(Number(log.args[2]) * 1000).toLocaleString(),
           content: log.args[3],
           blockNumber: log.blockNumber,
-          hash: log.transactionHash
+          hash: log.transactionHash,
+          replyCount: 0 // 初始化为0，稍后获取
         };
       });
+
+      // 为每个主题获取回复数量
+      for (let topic of parsedLogs) {
+        try {
+          topic.replyCount = await contract.getReplyCount(topic.topicId);
+        } catch (error) {
+          console.warn(`Failed to get reply count for topic ${topic.topicId}:`, error);
+          topic.replyCount = 0;
+        }
+      }
 
       topics = parsedLogs.reverse();
     } catch (error) {
@@ -220,28 +231,35 @@
             onclick={() => toggleTopic(topic.topicId)}
             onkeydown={(e) => e.key === 'Enter' && toggleTopic(topic.topicId)}
           >
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <h3 class="text-lg font-bold text-stone-100 mb-2">
-                  {getTitle(topic.content)}
-                </h3>
-                <div class="flex items-center gap-4 text-xs text-stone-500">
-                  <span class="text-red-400 font-bold">{topic.timestamp}</span>
-                  <span class="font-mono">{topic.author.slice(0, 8)}</span>
-                  <a 
-                    href="https://sepolia.etherscan.io/tx/{topic.hash}" 
-                    target="_blank" 
-                    class="hover:text-stone-300 hover:underline decoration-stone-700"
-                    onclick={(e) => e.stopPropagation()}
-                  >
-                    #{topic.blockNumber}
-                  </a>
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <h3 class="text-lg font-bold text-stone-100">
+                      {getTitle(topic.content)}
+                    </h3>
+                    {#if topic.replyCount > 0}
+                      <span class="text-xs bg-red-900/30 text-red-400 px-2 py-1 rounded">
+                        {topic.replyCount} {topic.replyCount === 1 ? 'reply' : 'replies'}
+                      </span>
+                    {/if}
+                  </div>
+                  <div class="flex items-center gap-4 text-xs text-stone-500">
+                    <span class="text-red-400 font-bold">{topic.timestamp}</span>
+                    <span class="font-mono">{topic.author.slice(0, 8)}</span>
+                    <a 
+                      href="https://sepolia.etherscan.io/tx/{topic.hash}" 
+                      target="_blank" 
+                      class="hover:text-stone-300 hover:underline decoration-stone-700"
+                      onclick={(e) => e.stopPropagation()}
+                    >
+                      #{topic.blockNumber}
+                    </a>
+                  </div>
+                </div>
+                <div class="text-stone-400 ml-4">
+                  {expandedTopics.has(topic.topicId) ? '▼' : '▶'}
                 </div>
               </div>
-              <div class="text-stone-400 ml-4">
-                {expandedTopics.has(topic.topicId) ? '▼' : '▶'}
-              </div>
-            </div>
           </button>
 
           <!-- Expanded Content -->

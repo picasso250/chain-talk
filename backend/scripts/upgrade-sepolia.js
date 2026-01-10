@@ -1,23 +1,27 @@
 const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  const PROXY_ADDRESS = process.env.PROXY_ADDRESS;
+  console.log("升级 ChainTalk 合约到 Sepolia 测试网...");
   
-  if (!PROXY_ADDRESS) {
-    throw new Error("请设置 PROXY_ADDRESS 环境变量");
-  }
+  // Sepolia 代理合约地址 (v0.1.0)
+  const PROXY_ADDRESS = "0xdBd31F6C024cE3433E482aa4288dc369584E31a2";
 
-  console.log("升级 ChainTalk 合约...");
   console.log("代理合约地址:", PROXY_ADDRESS);
 
   const ChainTalk = await ethers.getContractFactory("ChainTalk");
   const upgraded = await upgrades.upgradeProxy(PROXY_ADDRESS, ChainTalk);
   
-  console.log("合约已升级到:", upgraded.address);
+  console.log("合约已升级到:", await upgraded.getAddress());
   
   // 验证升级后的版本
   const version = await upgraded.version();
   console.log("升级后版本:", version);
+  
+  if (version === "0.2.0") {
+    console.log("✅ 升级成功！合约现在是 v0.2.0");
+  } else {
+    console.log("❌ 升级可能失败，版本不是 v0.2.0");
+  }
 }
 
 main()
