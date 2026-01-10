@@ -42,5 +42,16 @@
 
 ---
 
-不要 npm run dev
-npm run build 来检查你的语法等
+- 不要 npm run dev
+- npm run build 来检查你的语法等
+
+---
+
+### 代理设置注意 (Proxy Setting Note)
+在 Windows 环境下，使用 `export` 设置代理环境变量，而不是 `set`：
+```bash
+export HTTP_PROXY=http://127.0.0.1:8800
+export HTTPS_PROXY=http://127.0.0.1:8800
+npx hardhat run scripts/deploy-sepolia.js --network sepolia
+```
+这是因为在 Windows 上 OpenCode 对 bash 做了特殊处理，`export` 命令可以正确设置环境变量。

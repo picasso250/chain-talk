@@ -58,23 +58,43 @@
 - [x] 验证链上数据
 - [ ] 优化用户体验 (正在进行)
 
-## 第四阶段：V2EX 发布准备 (当前重点)
+## 第四阶段：合约升级与Arbitrum部署 (新增重点)
+
+### 步骤11：合约可升级改造
+- [ ] 使用OpenZeppelin升级模式改造合约架构
+- [ ] 实现代理合约和逻辑合约分离
+- [ ] 添加升级管理功能
+- [ ] 编写升级脚本
+
+### 步骤12：配置Arbitrum部署环境
+- [ ] 安装配置Hardhat Arbitrum插件
+- [ ] 设置Arbitrum Sepolia测试网配置
+- [ ] 获取测试网ETH和配置部署账户
+- [ ] 验证网络连通性
+
+### 步骤13：部署到Arbitrum
+- [ ] 部署代理合约到Arbitrum Sepolia
+- [ ] 验证合约功能和升级流程
+- [ ] 测试完整链上功能
+- [ ] 更新前端合约地址配置
+
+## 第五阶段：V2EX 发布准备
 
 为了在 V2EX 发布并获得良好反馈，必须降低用户访问门槛。
 
-### 步骤11：实现只读模式 (Read-Only Mode)
+### 步骤14：实现只读模式 (Read-Only Mode)
 - [x] **利用现有架构实现**: Ethers.js + MetaMask 自动支持只读访问模式
 - [x] **数据获取逻辑**: BrowserProvider 自动处理读取操作，无需用户授权
 - [x] **UI 状态区分**: 完善访客和用户状态的界面引导
 - [x] **天然实现了零门槛访问**: 有 MetaMask 插件即可浏览，无需连接
 
-### 步骤12：部署上线 (当前重点)
+### 步骤15：部署上线
 - [ ] 构建生产环境版本 (`npm run build`)
 - [ ] 部署至 Netlify
 - [ ] 验证生产环境公网访问
 
-### 步骤13：社区推广 (V2EX)
-- [ ] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + No Backend)
+### 步骤16：社区推广 (V2EX)
+- [ ] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + Upgradable Contracts + Arbitrum)
 - [ ] 准备 Demo 截图/GIF
 - [ ] 发布并收集反馈
 
@@ -82,10 +102,10 @@
 
 ## 执行记录
 
-### 当前状态：只读模式已完成，准备部署上线
+### 当前状态：合约可升级改造和Arbitrum部署阶段
 - **已完成**：全栈原型开发（合约+前端），功能闭环。
 - **已完成**：利用 Ethers.js + MetaMask 的天然只读特性实现零门槛访问
-- **当前任务**：准备生产环境部署和 V2EX 发布
+- **当前任务**：将合约改造为可升级架构并部署到Arbitrum
 
 ### 合约部署信息
 - **网络**：Sepolia测试网
@@ -95,4 +115,4 @@
 ### 技术栈亮点
 - Frontend: Svelte 5 (Runes) + Tailwind CSS + Ethers.js v6
 - Backend: Solidity 0.8.30 + Hardhat
-- Network: Arbitrum Sepolia / Sepolia
+- Network: Arbitrum / Sepolia
