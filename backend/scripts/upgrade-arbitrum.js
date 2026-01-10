@@ -3,12 +3,8 @@ const { ethers, upgrades } = require("hardhat");
 async function main() {
   console.log("升级 ChainTalk 合约到 Arbitrum 主网...");
   
-  // Arbitrum 主网代理合约地址 (待部署后更新)
-  const PROXY_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-  if (PROXY_ADDRESS === "0x0000000000000000000000000000000000000000") {
-    throw new Error("请先部署到 Arbitrum 并更新 PROXY_ADDRESS");
-  }
+  // Arbitrum 主网代理合约地址
+  const PROXY_ADDRESS = "0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380";
 
   console.log("代理合约地址:", PROXY_ADDRESS);
 
