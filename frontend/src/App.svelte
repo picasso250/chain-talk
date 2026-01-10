@@ -156,20 +156,20 @@
   });
 </script>
 
-<main class="min-h-screen bg-stone-900 text-stone-200 font-mono selection:bg-red-900 selection:text-white">
+<main class="min-h-screen bg-gray-50 text-gray-800 font-sans selection:bg-green-100 selection:text-green-800 leading-relaxed">
   <!--Navbar -->
-  <nav class="border-b border-stone-800 p-4 sticky top-0 bg-stone-900/95 backdrop-blur z-10">
+  <nav class="border-b border-gray-200 p-4 sticky top-0 bg-white/95 backdrop-blur z-10">
     <div class="max-w-3xl mx-auto flex justify-between items-center">
-      <h1 class="text-xl font-bold tracking-tighter text-red-500 uppercase">
+      <h1 class="text-xl font-bold text-green-600">
         Chain Talk
-        <span class="text-xs text-stone-500 font-normal normal-case block sm:inline sm:ml-2">
+        <span class="text-xs text-gray-500 font-normal block sm:inline sm:ml-2">
           // Eternal Conversations
         </span>
       </h1>
       
       <button 
         onclick={connectWallet}
-        class="text-sm px-4 py-2 border border-stone-700 hover:border-red-500 hover:text-red-500 transition-colors duration-300 disabled:opacity-50"
+        class="text-sm px-3 py-1.5 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300 disabled:opacity-50"
         disabled={isConnecting}
       >
         {#if account}
@@ -186,21 +186,21 @@
     <!-- New Topic -->
     <section class="mb-12">
       <div class="relative group">
-        <div class="absolute -inset-0.5 bg-gradient-to-r from-red-900 to-stone-800 rounded opacity-30 group-hover:opacity-70 transition duration-500 blur"></div>
-        <div class="relative bg-stone-950 p-6 rounded border border-stone-800">
+        <div class="absolute -inset-0.5 bg-gradient-to-r from-green-100 to-gray-200 rounded opacity-50 group-hover:opacity-70 transition duration-500 blur"></div>
+        <div class="relative bg-white p-6 rounded border border-gray-200 shadow-sm">
           <textarea
             bind:value={topicContent}
             placeholder="Start a conversation. First line becomes the title..."
-            class="w-full bg-transparent text-lg outline-none resize-none h-24 placeholder-stone-600"
+            class="w-full bg-transparent text-base outline-none resize-none h-24 placeholder-gray-400 leading-relaxed"
           ></textarea>
           <div class="flex justify-between items-center mt-4 border-t border-stone-900 pt-4">
-            <span class="text-xs text-stone-500">
+            <span class="text-xs text-gray-500">
               Immutable • Permanent • Anonymous
             </span>
             <button 
               onclick={createTopic}
               disabled={loading || !topicContent.trim()}
-              class="bg-stone-100 text-stone-900 hover:bg-red-600 hover:text-white px-6 py-2 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Posting...' : 'POST TOPIC'}
             </button>
@@ -212,51 +212,51 @@
     <!-- Topics -->
     <section class="space-y-6">
       <div class="flex items-center gap-4">
-        <h2 class="text-2xl font-bold text-stone-100">Topics</h2>
-        <div class="h-px bg-stone-800 flex-1"></div>
+        <h2 class="text-2xl font-bold text-gray-800">Topics</h2>
+        <div class="h-px bg-gray-200 flex-1"></div>
       </div>
 
       {#if topics.length === 0}
-        <div class="text-center py-12 text-stone-600 italic">
+        <div class="text-center py-12 text-gray-500 italic">
           No topics yet. Start the first conversation.
         </div>
       {/if}
 
       {#each topics as topic (topic.hash)}
-        <article class="border border-stone-800 rounded overflow-hidden hover:border-red-900 transition-colors duration-300">
+        <article class="border border-gray-200 rounded-lg overflow-hidden hover:border-green-400 transition-colors duration-300 bg-white shadow-sm">
           <!-- Topic Header (Always Visible) -->
           <button 
             type="button"
-            class="w-full p-4 cursor-pointer hover:bg-stone-800/50 transition-colors text-left"
+            class="w-full p-4 cursor-pointer hover:bg-gray-50 transition-colors text-left"
             onclick={() => toggleTopic(topic.topicId)}
             onkeydown={(e) => e.key === 'Enter' && toggleTopic(topic.topicId)}
           >
               <div class="flex justify-between items-start">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
-                    <h3 class="text-lg font-bold text-stone-100">
+                    <h3 class="text-base font-medium text-gray-800">
                       {getTitle(topic.content)}
                     </h3>
                     {#if topic.replyCount > 0}
-                      <span class="text-xs bg-red-900/30 text-red-400 px-2 py-1 rounded">
+                      <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">
                         {topic.replyCount} {topic.replyCount === 1 ? 'reply' : 'replies'}
                       </span>
                     {/if}
                   </div>
-                  <div class="flex items-center gap-4 text-xs text-stone-500">
-                    <span class="text-red-400 font-bold">{topic.timestamp}</span>
-                    <span class="font-mono">{topic.author.slice(0, 8)}</span>
+                  <div class="flex items-center gap-3 text-xs text-gray-500">
+                    <span class="text-green-600 font-medium">{topic.timestamp}</span>
+                    <span class="font-mono text-xs">{topic.author.slice(0, 8)}</span>
                     <a 
                       href="https://sepolia.etherscan.io/tx/{topic.hash}" 
                       target="_blank" 
-                      class="hover:text-stone-300 hover:underline decoration-stone-700"
+                      class="hover:text-gray-700 hover:underline decoration-gray-300"
                       onclick={(e) => e.stopPropagation()}
                     >
                       #{topic.blockNumber}
                     </a>
                   </div>
                 </div>
-                <div class="text-stone-400 ml-4">
+                <div class="text-gray-400 ml-4">
                   {expandedTopics.has(topic.topicId) ? '▼' : '▶'}
                 </div>
               </div>
@@ -264,11 +264,11 @@
 
           <!-- Expanded Content -->
           {#if expandedTopics.has(topic.topicId)}
-            <div class="border-t border-stone-800">
+            <div class="border-t border-gray-200">
               <!-- Topic Content -->
-              <div class="p-4 bg-stone-900/50">
-                <div class="prose prose-invert prose-stone max-w-none">
-                  <p class="whitespace-pre-wrap leading-relaxed text-stone-300">
+              <div class="p-4 bg-gray-50">
+                <div class="prose max-w-none">
+                  <p class="whitespace-pre-wrap leading-relaxed text-gray-700">
                     {topic.content}
                   </p>
                 </div>
