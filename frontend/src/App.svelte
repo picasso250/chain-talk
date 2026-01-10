@@ -173,7 +173,7 @@
         disabled={isConnecting}
       >
         {#if account}
-          {account.slice(0, 6)}...{account.slice(-4)}
+           {account.slice(0, 6)}...{account.slice(-4)}
         {:else}
           {isConnecting ? 'Connecting...' : 'Connect Wallet'}
         {/if}
@@ -245,7 +245,7 @@
                   </div>
                   <div class="flex items-center gap-3 text-xs text-gray-500">
                     <span class="text-green-600 font-medium">{topic.timestamp}</span>
-                    <span class="font-mono text-xs">{topic.author.slice(0, 8)}</span>
+                     <span class="font-mono text-xs">{topic.author.slice(0, 6)}...{topic.author.slice(-4)}</span>
                     <a 
                       href="https://sepolia.etherscan.io/tx/{topic.hash}" 
                       target="_blank" 

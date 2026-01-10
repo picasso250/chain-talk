@@ -108,7 +108,7 @@
         <div class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{reply.timestamp}</span>
-          <span class="font-mono" title={reply.author}>{reply.author.slice(0, 8)}...</span>
+          <span class="font-mono" title={reply.author}>{reply.author.slice(0, 6)}...{reply.author.slice(-4)}</span>
           <a 
             href={`https://sepolia.etherscan.io/tx/${reply.hash}`} 
             target="_blank" 
