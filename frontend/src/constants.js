@@ -1,8 +1,8 @@
-// Sepolia Testnet Deployment (Upgraded to v0.2.0)
-export const CONTRACT_ADDRESS = "0xdBd31F6C024cE3433E482aa4288dc369584E31a2"; 
+// Arbitrum Mainnet Deployment (v0.2.0)
+export const CONTRACT_ADDRESS = "0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380"; 
 
-// Sepolia Testnet Chain ID (Hex)
-export const TARGET_CHAIN_ID = "0xaa36a7"; // 11155111
+// Arbitrum One Chain ID (Hex)
+export const TARGET_CHAIN_ID = "0xa4b1"; // 42161
 
 export const CONTRACT_ABI = [
   {

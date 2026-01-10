@@ -26,7 +26,7 @@
         return true;
       } catch (switchError) {
         console.error("Failed to switch network:", switchError);
-        alert("Please switch your wallet to Sepolia network.");
+        alert("Please switch your wallet to Arbitrum One network.");
         return false;
       }
     }
@@ -159,7 +159,7 @@
 </script>
 
 <main class="min-h-screen bg-gray-50 text-gray-800 font-sans selection:bg-green-100 selection:text-green-800 leading-relaxed">
-  <!--Navbar -->
+<!--Navbar -->
   <nav class="border-b border-gray-200 p-4 sticky top-0 bg-white/95 backdrop-blur z-10">
     <div class="max-w-3xl mx-auto flex justify-between items-center">
       <h1 class="text-xl font-bold text-green-600">
@@ -169,17 +169,29 @@
         </span>
       </h1>
       
-      <button 
-        onclick={connectWallet}
-        class="text-sm px-3 py-1.5 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300 disabled:opacity-50"
-        disabled={isConnecting}
-      >
-        {#if account}
-           {account.slice(0, 6)}...{account.slice(-4)}
-        {:else}
-          {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-        {/if}
-      </button>
+      <div class="flex items-center gap-3">
+        <!-- Arbitrum Network Badge -->
+        <div class="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-medium text-blue-700">
+          <!-- Arbitrum Logo SVG -->
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" fill="#28A0F0"/>
+            <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Arbitrum
+        </div>
+        
+        <button 
+          onclick={connectWallet}
+          class="text-sm px-3 py-1.5 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300 disabled:opacity-50"
+          disabled={isConnecting}
+        >
+          {#if account}
+             {account.slice(0, 6)}...{account.slice(-4)}
+          {:else}
+            {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+          {/if}
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -247,11 +259,11 @@
                   </div>
                   <div class="flex items-center gap-3 text-xs text-gray-500">
                     <span class="text-green-600 font-medium">{topic.timestamp}</span>
-                     <a href="https://sepolia.etherscan.io/address/{topic.author}" target="_blank" class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300">
+                     <a href="https://arbiscan.io/address/{topic.author}" target="_blank" class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300">
                        {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
                      </a>
                     <a 
-                      href="https://sepolia.etherscan.io/tx/{topic.hash}" 
+                      href="https://arbiscan.io/tx/{topic.hash}" 
                       target="_blank" 
                       class="hover:text-gray-700 hover:underline decoration-gray-300"
                       onclick={(e) => e.stopPropagation()}
