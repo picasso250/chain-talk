@@ -114,7 +114,7 @@
             target="_blank" 
             class="hover:text-gray-700 hover:underline decoration-gray-300"
           >
-            #{reply.blockNumber}
+            tx/{reply.hash.slice(0, 6)}...{reply.hash.slice(-6)}
           </a>
         </div>
         <div class="prose max-w-none">

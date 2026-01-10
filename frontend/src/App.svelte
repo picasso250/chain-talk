@@ -252,7 +252,7 @@
                       class="hover:text-gray-700 hover:underline decoration-gray-300"
                       onclick={(e) => e.stopPropagation()}
                     >
-                      #{topic.blockNumber}
+                      tx/{topic.hash.slice(0, 6)}...{topic.hash.slice(-6)}
                     </a>
                   </div>
                 </div>
