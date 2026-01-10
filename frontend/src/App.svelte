@@ -245,7 +245,9 @@
                   </div>
                   <div class="flex items-center gap-3 text-xs text-gray-500">
                     <span class="text-green-600 font-medium">{topic.timestamp}</span>
-                     <span class="font-mono text-xs">{topic.author.slice(0, 6)}...{topic.author.slice(-4)}</span>
+                     <a href="https://sepolia.etherscan.io/address/{topic.author}" target="_blank" class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300">
+                       {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
+                     </a>
                     <a 
                       href="https://sepolia.etherscan.io/tx/{topic.hash}" 
                       target="_blank" 
