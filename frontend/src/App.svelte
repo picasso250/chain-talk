@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { slide } from "svelte/transition";
   import { ethers } from "ethers";
   import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./constants";
   import ReplySection from "./ReplySection.svelte";
@@ -266,7 +267,10 @@
 
           <!-- Expanded Content -->
           {#if expandedTopics.has(topic.topicId)}
-            <div class="border-t border-gray-200">
+            <div 
+              class="border-t border-gray-200"
+              transition:slide={{ duration: 300 }}
+            >
               <!-- Topic Content -->
               <div class="p-4 bg-gray-50">
                 <div class="prose max-w-none">
