@@ -180,11 +180,11 @@ onMount(() => {
 <main
   class="min-h-screen bg-gray-50 text-gray-800 font-sans selection:bg-green-100 selection:text-green-800 leading-relaxed"
 >
-  <!--Navbar -->
+<!--Navbar -->
   <nav
     class="border-b border-gray-200 p-4 sticky top-0 bg-white/95 backdrop-blur z-10"
   >
-    <div class="max-w-3xl mx-auto flex justify-between items-center">
+<div class="px-4 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center sm:gap-0">
       <h1 class="text-xl font-bold text-green-600">
         Chain Talk
         <span class="text-xs text-gray-500 font-normal block sm:inline sm:ml-2">
@@ -192,7 +192,7 @@ onMount(() => {
         </span>
       </h1>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center justify-between sm:justify-end gap-3">
         <!-- Arbitrum Network Badge -->
         <div
           class="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-medium text-blue-700"
