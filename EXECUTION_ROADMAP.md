@@ -93,12 +93,12 @@
 - [x] **UI网络标识集成**: Header添加Arbitrum徽章，避免用户混淆
 - [x] **用户体验优化**: 所有网络相关提示更新为Arbitrum
 
-### 步骤16：部署上线 ⏳ 进行中
+### 步骤16：部署上线 ✅ 已完成
 - [x] 构建生产环境版本 (`npm run build`)
-- [ ] 部署至 Netlify
-- [ ] 验证生产环境公网访问
+- [x] 部署至 Netlify (https://chain-talk.netlify.app/)
+- [x] 验证生产环境公网访问
 
-## 第六阶段：社区推广 (V2EX) ⏳ 待执行
+## 第六阶段：社区推广 (V2EX) ⏳ 进行中
 
 ### 步骤17：发布准备
 - [ ] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + OpenZeppelin Upgradable + Arbitrum)
@@ -110,12 +110,13 @@
 
 ## 执行记录
 
-### 当前状态：生产环境部署阶段
+### 当前状态：社区推广阶段
 - **已完成**：全栈原型开发（合约+前端），功能闭环
 - **已完成**：Ethers.js + MetaMask 天然只读特性实现零门槛访问
 - **已完成**：OpenZeppelin UUPS 升级架构改造
 - **已完成**：Arbitrum 主网部署和前端迁移
-- **当前任务**：生产环境部署和社区推广准备
+- **已完成**：生产环境部署 (https://chain-talk.netlify.app/)
+- **当前任务**：社区推广准备 (V2EX发布)
 
 ### 合约部署信息
 - **网络**：Arbitrum One 主网
