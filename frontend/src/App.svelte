@@ -106,8 +106,9 @@
     expandedTopics = new Set(expandedTopics);
   }
 
-  // 读取主题
+// 读取主题
   async function fetchTopics() {
+    loading = true;
     try {
       let provider;
       if (window.ethereum) {
@@ -150,9 +151,11 @@
         }
       }
 
-      topics = parsedLogs.reverse();
+topics = parsedLogs.reverse();
     } catch (error) {
       console.error("Fetch topics failed:", error);
+    } finally {
+      loading = false;
     }
   }
 
@@ -306,7 +309,11 @@
         <div class="h-px bg-gray-200 flex-1"></div>
       </div>
 
-      {#if topics.length === 0}
+{#if loading}
+        <div class="text-center py-12 text-gray-500 italic">
+          Loading topics...
+        </div>
+      {:else if topics.length === 0}
         <div class="text-center py-12 text-gray-500 italic">
           No topics yet. Start the first conversation.
         </div>

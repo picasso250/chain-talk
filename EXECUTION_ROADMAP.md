@@ -98,13 +98,13 @@
 - [x] 部署至 Netlify (https://chain-talk.netlify.app/)
 - [x] 验证生产环境公网访问
 
-## 第六阶段：社区推广 (V2EX) ⏳ 进行中
+## 第六阶段：社区推广 (V2EX) ✅ 已完成
 
-### 步骤17：发布准备
-- [ ] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + OpenZeppelin Upgradable + Arbitrum)
-- [ ] 准备 Demo 截图/GIF
-- [ ] 整理技术亮点清单
-- [ ] 发布并收集反馈
+### 步骤17：发布准备 ✅ 已完成
+- [x] 撰写发布文案 (强调技术栈：Svelte 5 + Solidity + OpenZeppelin Upgradable + Arbitrum)
+- [x] 准备 Demo 截图/GIF
+- [x] 整理技术亮点清单
+- [x] 发布并收集反馈 (周日发布，虽非最佳时段但已触达用户)
 
 ---
 
@@ -116,7 +116,8 @@
 - **已完成**：OpenZeppelin UUPS 升级架构改造
 - **已完成**：Arbitrum 主网部署和前端迁移
 - **已完成**：生产环境部署 (https://chain-talk.netlify.app/)
-- **当前任务**：社区推广准备 (V2EX发布)
+- **已完成**：社区推广 (V2EX发布)
+- **当前任务**：收集用户反馈并优化产品
 
 ### 合约部署信息
 - **网络**：Arbitrum One 主网
