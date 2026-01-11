@@ -11,7 +11,7 @@
   let loading = $state(false);
   let submitting = $state(false);
 
-  // 获取回复
+// 获取回复
   async function fetchReplies() {
     loading = true;
     try {
@@ -19,14 +19,8 @@
       if (window.ethereum) {
         provider = new ethers.BrowserProvider(window.ethereum);
       } else {
-        // Fallback provider or read-only provider could be added here
-        // For now, we rely on window.ethereum or just return if not present
-        // (though read-only implies we might want a public RPC url if wallet not connected)
-        // But consistent with App.svelte, we'll try to use window.ethereum if available.
-        // If not, we can't read from chain unless we have an RPC URL.
-        // Assuming user has a wallet or we just don't show replies.
-        if (!window.ethereum) return;
-        return; 
+        // 使用公共RPC作为fallback
+        provider = new ethers.JsonRpcProvider("https://arb1.arbitrum.io/rpc");
       }
 
       // 为了读取数据，不需要 signer，只需要 provider
@@ -149,9 +143,9 @@
           </div>
         </div>
       </div>
-    {:else}
+{:else}
       <div class="text-center py-6 border-t border-gray-200">
-        <span class="text-gray-500 text-sm">Connect wallet to join the conversation</span>
+          <span class="text-gray-500 text-sm">Connect wallet to join the conversation</span>
       </div>
     {/if}
   </div>

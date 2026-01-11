@@ -6,13 +6,14 @@
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
-  let account = $state(null);
+let account = $state(null);
   let topicContent = $state("");
   let topics = $state([]);
   let expandedTopics = $state(new Set());
   let loading = $state(false);
   let isConnecting = $state(false);
   let isPreviewMode = $state(false);
+  let hasWallet = $state(!!window.ethereum);
 
   // 检查并切换网络
   async function checkNetwork() {
@@ -114,7 +115,8 @@
       if (window.ethereum) {
         provider = new ethers.BrowserProvider(window.ethereum);
       } else {
-        return;
+        // 使用公共RPC作为fallback
+        provider = new ethers.JsonRpcProvider("https://arb1.arbitrum.io/rpc");
       }
 
       const contract = new ethers.Contract(
@@ -159,7 +161,10 @@ topics = parsedLogs.reverse();
     }
   }
 
-  onMount(() => {
+onMount(() => {
+    // 无论是否有钱包都尝试获取topics
+    fetchTopics();
+    
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts) => {
         if (accounts.length > 0) {
@@ -168,7 +173,6 @@ topics = parsedLogs.reverse();
           account = null;
         }
       });
-      fetchTopics();
     }
   });
 </script>
@@ -315,7 +319,7 @@ topics = parsedLogs.reverse();
         </div>
       {:else if topics.length === 0}
         <div class="text-center py-12 text-gray-500 italic">
-          No topics yet. Start the first conversation.
+            No topics yet. Start the first conversation.
         </div>
       {/if}
 
