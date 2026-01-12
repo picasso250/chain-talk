@@ -39,9 +39,6 @@ jobs:
       run: |
         cd backend
         npx hardhat run scripts/fetch-chain-data.js --network arbitrum
-      env:
-        # 如果需要私有RPC，可以添加环境变量
-        # ARBITRUM_RPC_URL: ${{ secrets.ARBITRUM_RPC_URL }}
         
     - name: Commit and push changes
       run: |
