@@ -111,51 +111,72 @@ let account = $state(null);
   async function fetchTopics() {
     loading = true;
     try {
-      let provider;
-      if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-      } else {
-        // 使用公共RPC作为fallback
-        provider = new ethers.JsonRpcProvider("https://arb1.arbitrum.io/rpc");
-      }
-
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        provider,
-      );
-
-      const filter = contract.filters.TopicCreated();
-      const logs = await contract.queryFilter(filter);
-
-      const parsedLogs = logs.map((log) => {
-        return {
-          topicId: log.args[0],
-          author: log.args[1],
-          timestamp: new Date(Number(log.args[2]) * 1000).toLocaleString(),
-          content: log.args[3],
-          blockNumber: log.blockNumber,
-          hash: log.transactionHash,
-          replyCount: 0, // 初始化为0，稍后获取
-        };
-      });
-
-      // 为每个主题获取回复数量
-      for (let topic of parsedLogs) {
-        try {
-          topic.replyCount = await contract.getReplyCount(topic.topicId);
-        } catch (error) {
-          console.warn(
-            `Failed to get reply count for topic ${topic.topicId}:`,
-            error,
-          );
-          topic.replyCount = 0;
+      // 1. 优先尝试从本地缓存读取
+      try {
+        const response = await fetch('/data/topics.json');
+        if (response.ok) {
+          const cachedTopics = await response.json();
+          topics = cachedTopics.reverse();
+          console.log('Using cached topics:', cachedTopics.length);
+          return;
         }
+      } catch (cacheError) {
+        console.warn('Failed to load cached topics:', cacheError);
       }
 
-topics = parsedLogs.reverse();
+      // 2. 如果没有缓存且有钱包，使用钱包RPC（兼容Phantom）
+      if (window.ethereum) {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          CONTRACT_ABI,
+          provider,
+        );
+
+        const filter = contract.filters.TopicCreated();
+        
+        // 兼容Phantom钱包：限制查询范围到10000区块内
+        const latestBlock = await provider.getBlockNumber();
+        const fromBlock = Math.max(0, latestBlock - 9000); // 留1000区块余量
+        
+        console.log(`Querying topics from block ${fromBlock} to ${latestBlock}`);
+        const logs = await contract.queryFilter(filter, fromBlock, "latest");
+
+        const parsedLogs = logs.map((log) => {
+          return {
+            topicId: log.args[0],
+            author: log.args[1],
+            timestamp: new Date(Number(log.args[2]) * 1000).toLocaleString(),
+            content: log.args[3],
+            blockNumber: log.blockNumber,
+            hash: log.transactionHash,
+            replyCount: 0, // 初始化为0，稍后获取
+          };
+        });
+
+        // 为每个主题获取回复数量
+        for (let topic of parsedLogs) {
+          try {
+            topic.replyCount = await contract.getReplyCount(topic.topicId);
+          } catch (error) {
+            console.warn(
+              `Failed to get reply count for topic ${topic.topicId}:`,
+              error,
+            );
+            topic.replyCount = 0;
+          }
+        }
+
+        topics = parsedLogs.reverse();
+        console.log('Using wallet RPC topics:', topics.length);
+      } else {
+        // 3. 没有钱包且没有缓存，显示空状态
+        console.log('No wallet and no cache available');
+        topics = [];
+      }
     } catch (error) {
       console.error("Fetch topics failed:", error);
+      topics = [];
     } finally {
       loading = false;
     }

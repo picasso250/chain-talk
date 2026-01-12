@@ -15,39 +15,60 @@
   async function fetchReplies() {
     loading = true;
     try {
-      let provider;
-      if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-      } else {
-        // 使用公共RPC作为fallback
-        provider = new ethers.JsonRpcProvider("https://arb1.arbitrum.io/rpc");
+      // 1. 优先尝试从本地缓存读取
+      try {
+        const response = await fetch('/data/replies.json');
+        if (response.ok) {
+          const cachedReplies = await response.json();
+          // 过滤当前topic的回复
+          const topicReplies = cachedReplies.filter(reply => reply.topicId === topicId);
+          replies = topicReplies.reverse();
+          console.log(`Using cached replies for topic ${topicId}:`, replies.length);
+          return;
+        }
+      } catch (cacheError) {
+        console.warn('Failed to load cached replies:', cacheError);
       }
 
-      // 为了读取数据，不需要 signer，只需要 provider
-      // 但如果 window.ethereum 存在，BrowserProvider 就可以工作
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      
-      // 过滤特定 topicId 的回复
-      // ReplyCreated(uint256 indexed replyId, uint256 indexed topicId, ...)
-      // arg0: replyId (skip), arg1: topicId (match)
-      const filter = contract.filters.ReplyCreated(null, topicId);
-      const logs = await contract.queryFilter(filter);
+      // 2. 如果没有缓存且有钱包，使用钱包RPC（兼容Phantom）
+      if (window.ethereum) {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        
+        // 过滤特定 topicId 的回复
+        // ReplyCreated(uint256 indexed replyId, uint256 indexed topicId, ...)
+        // arg0: replyId (skip), arg1: topicId (match)
+        const filter = contract.filters.ReplyCreated(null, topicId);
+        
+        // 兼容Phantom钱包：限制查询范围到10000区块内
+        const latestBlock = await provider.getBlockNumber();
+        const fromBlock = Math.max(0, latestBlock - 9000); // 留1000区块余量
+        
+        console.log(`Querying replies for topic ${topicId} from block ${fromBlock} to ${latestBlock}`);
+        const logs = await contract.queryFilter(filter, fromBlock, "latest");
 
-      const parsedLogs = logs.map(log => {
-        return {
-          replyId: log.args[0],
-          topicId: log.args[1],
-          author: log.args[2],
-          timestamp: new Date(Number(log.args[3]) * 1000).toLocaleString(),
-          content: log.args[4],
-          blockNumber: log.blockNumber,
-          hash: log.transactionHash
-        };
-      });
+        const parsedLogs = logs.map(log => {
+          return {
+            replyId: log.args[0],
+            topicId: log.args[1],
+            author: log.args[2],
+            timestamp: new Date(Number(log.args[3]) * 1000).toLocaleString(),
+            content: log.args[4],
+            blockNumber: log.blockNumber,
+            hash: log.transactionHash
+          };
+        });
 
-      replies = parsedLogs.reverse();
+        replies = parsedLogs.reverse();
+        console.log(`Using wallet RPC replies for topic ${topicId}:`, replies.length);
+      } else {
+        // 3. 没有钱包且没有缓存，显示空状态
+        console.log(`No wallet and no cache available for topic ${topicId}`);
+        replies = [];
+      }
     } catch (error) {
       console.error("Fetch replies failed:", error);
+      replies = [];
     } finally {
       loading = false;
     }
