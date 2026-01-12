@@ -1,0 +1,56 @@
+name: Fetch Chain Data
+
+on:
+  schedule:
+    # 每半小时运行一次 (在每小时的第5分钟和第35分钟)
+    - cron: '5,35 * * * *'
+  
+  workflow_dispatch: # 允许手动触发
+  
+  push:
+    branches: [ main, feature/local-data-cache ]
+    paths:
+      - 'backend/contracts/**'
+      - '.github/workflows/fetch-chain-data.yml'
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Fetch chain data
+      run: |
+        cd backend
+        npx hardhat run scripts/fetch-chain-data.js --network arbitrum
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # 检查是否有变更
+        if git diff --quiet; then
+          echo "No data changes to commit"
+        else
+          git add frontend/public/data/*.json
+          git commit -m "🔄 Auto-update chain data $(date '+%Y-%m-%d %H:%M:%S UTC')"
+          git push
+        fi
+        
