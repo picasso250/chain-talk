@@ -22,7 +22,13 @@
           const cachedReplies = await response.json();
           // 过滤当前topic的回复
           const topicReplies = cachedReplies.filter(reply => reply.topicId === topicId);
-          replies = topicReplies.reverse();
+          if (topicReplies.length > 0) {
+            console.log('=== CACHED REPLIES STRUCTURE ===');
+            console.log('Sample cached reply:', topicReplies[0]);
+            console.log('All keys:', Object.keys(topicReplies[0]));
+          }
+          // 按 replyId 顺序排序（最早在前，类似 v2ex）
+          replies = topicReplies.sort((a, b) => a.replyId - b.replyId);
           console.log(`Using cached replies for topic ${topicId}:`, replies.length);
           return;
         }
@@ -47,19 +53,26 @@
         console.log(`Querying replies for topic ${topicId} from block ${fromBlock} to ${latestBlock}`);
         const logs = await contract.queryFilter(filter, fromBlock, "latest");
 
-        const parsedLogs = logs.map(log => {
-          return {
-            replyId: log.args[0],
-            topicId: log.args[1],
+        const parsedLogs = logs.map((log, index) => {
+          const reply = {
+            replyId: Number(log.args[0]),
+            topicId: Number(log.args[1]),
             author: log.args[2],
-            timestamp: new Date(Number(log.args[3]) * 1000).toLocaleString(),
+            timestamp: String(log.args[3]),
             content: log.args[4],
-            blockNumber: log.blockNumber,
-            hash: log.transactionHash
+            blockNumber: String(log.blockNumber),
+            transactionHash: log.transactionHash
           };
+          if (index === 0) {
+            console.log('=== WALLET REPLIES STRUCTURE ===');
+            console.log('Sample wallet reply:', reply);
+            console.log('All keys:', Object.keys(reply));
+          }
+          return reply;
         });
 
-        replies = parsedLogs.reverse();
+        // 按 replyId 顺序排序（最早在前，类似 v2ex）
+        replies = parsedLogs.sort((a, b) => a.replyId - b.replyId);
         console.log(`Using wallet RPC replies for topic ${topicId}:`, replies.length);
       } else {
         // 3. 没有钱包且没有缓存，显示空状态
@@ -120,7 +133,7 @@
         <div class="text-gray-500 text-sm italic py-2">No replies yet.</div>
     {/if}
 
-    {#each replies as reply (reply.hash)}
+    {#each replies as reply (reply.transactionHash)}
         <div class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{reply.timestamp}</span>

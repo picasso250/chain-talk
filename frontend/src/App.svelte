@@ -111,20 +111,29 @@ let account = $state(null);
   async function fetchTopics() {
     loading = true;
     try {
-      // 1. 优先尝试从本地缓存读取
+      let allTopics = [];
+      
+      // 1. 读取本地缓存数据
       try {
         const response = await fetch('/data/topics.json');
         if (response.ok) {
           const cachedTopics = await response.json();
-          topics = cachedTopics.reverse();
-          console.log('Using cached topics:', cachedTopics.length);
-          return;
+          console.log('=== CACHED TOPICS STRUCTURE ===');
+          console.log('Sample cached topic:', cachedTopics[0]);
+          console.log('All keys:', Object.keys(cachedTopics[0] || {}));
+          
+          // 处理缓存数据
+          allTopics = cachedTopics.map(topic => ({
+            ...topic,
+            topicId: Number(topic.topicId)
+          }));
+          console.log('Loaded cached topics:', cachedTopics.length);
         }
       } catch (cacheError) {
         console.warn('Failed to load cached topics:', cacheError);
       }
 
-      // 2. 如果没有缓存且有钱包，使用钱包RPC（兼容Phantom）
+      // 2. 总是尝试从钱包获取最新数据
       if (window.ethereum) {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const contract = new ethers.Contract(
@@ -135,7 +144,7 @@ let account = $state(null);
 
         const filter = contract.filters.TopicCreated();
         
-        // 兼容Phantom钱包：限制查询范围到10000区块内
+        // 临时扩大查询范围以获取更多数据进行对比
         const latestBlock = await provider.getBlockNumber();
         const fromBlock = Math.max(0, latestBlock - 9000); // 留1000区块余量
         
@@ -143,15 +152,21 @@ let account = $state(null);
         const logs = await contract.queryFilter(filter, fromBlock, "latest");
 
         const parsedLogs = logs.map((log) => {
-          return {
-            topicId: log.args[0],
+          const topic = {
+            topicId: Number(log.args[0]),
             author: log.args[1],
-            timestamp: new Date(Number(log.args[2]) * 1000).toLocaleString(),
+            timestamp: String(log.args[2]),
             content: log.args[3],
-            blockNumber: log.blockNumber,
-            hash: log.transactionHash,
+            blockNumber: String(log.blockNumber),
+            transactionHash: log.transactionHash,
             replyCount: 0, // 初始化为0，稍后获取
           };
+          if (logs.indexOf(log) === 0) {
+            console.log('=== WALLET TOPICS STRUCTURE ===');
+            console.log('Sample wallet topic:', topic);
+            console.log('All keys:', Object.keys(topic));
+          }
+          return topic;
         });
 
         // 为每个主题获取回复数量
@@ -167,12 +182,19 @@ let account = $state(null);
           }
         }
 
-        topics = parsedLogs.reverse();
-        console.log('Using wallet RPC topics:', topics.length);
+        // 3. 合并缓存数据和钱包数据（通过transactionHash去重）
+        const mergedTopics = [...allTopics, ...parsedLogs];
+        const uniqueTopics = mergedTopics.filter((topic, index, self) => 
+          index === self.findIndex(t => t.transactionHash === topic.transactionHash)
+        );
+        
+        // 按 topicId 逆序排序（最新在前，类似 v2ex）
+        topics = uniqueTopics.sort((a, b) => b.topicId - a.topicId);
+        console.log('Merged topics - Total:', uniqueTopics.length, 'Cached:', allTopics.length, 'New:', parsedLogs.length);
       } else {
-        // 3. 没有钱包且没有缓存，显示空状态
-        console.log('No wallet and no cache available');
-        topics = [];
+        // 4. 没有钱包，只使用缓存数据
+        topics = allTopics.sort((a, b) => b.topicId - a.topicId);
+        console.log('Using cached topics only:', allTopics.length);
       }
     } catch (error) {
       console.error("Fetch topics failed:", error);
@@ -344,7 +366,7 @@ onMount(() => {
         </div>
       {/if}
 
-      {#each topics as topic (topic.hash)}
+      {#each topics as topic (topic.transactionHash)}
         <article
           class="border border-gray-200 rounded-lg overflow-hidden hover:border-green-400 transition-colors duration-300 bg-white shadow-sm"
         >
@@ -387,7 +409,7 @@ onMount(() => {
                     class="hover:text-gray-700 hover:underline decoration-gray-300"
                     onclick={(e) => e.stopPropagation()}
                   >
-                    tx/{topic.hash.slice(0, 6)}...{topic.hash.slice(-6)}
+                    tx/{topic.transactionHash.slice(0, 6)}...{topic.transactionHash.slice(-6)}
                   </a>
                 </div>
               </div>
