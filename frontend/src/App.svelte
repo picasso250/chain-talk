@@ -121,7 +121,7 @@ let hasWallet = $state(!!window.ethereum);
 
       topicContent = "";
       await fetchTopics();
-      await fetchAllReplies(); // 预加载所有回复
+      await fetchAllReplies();
     } catch (error) {
       console.error("Create topic failed:", error);
       alert("Failed to create topic. See console for details.");
@@ -146,56 +146,48 @@ let hasWallet = $state(!!window.ethereum);
     expandedTopics = new Set(expandedTopics);
   }
 
-// 预加载所有回复
+  // 从The Graph获取所有回复数据
   async function fetchAllReplies() {
     try {
-      let cachedReplies = [];
+      const endpoint = "https://api.studio.thegraph.com/query/1723159/chain-talk/version/latest";
+      const graphqlQuery = {
+        query: `
+          query {
+            topics(orderBy: timestamp, orderDirection: desc) {
+              id
+              replies(orderBy: timestamp, orderDirection: asc) {
+                id
+                author
+                content
+                timestamp
+              }
+            }
+          }
+        `
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(graphqlQuery)
+      });
+
+      const data = await response.json();
       
-      // 1. 读取缓存回复
-        try {
-        const response = await fetch('/data/replies.json');
-        if (response.ok) {
-          cachedReplies = await response.json();
-        }
-      } catch (cacheError) {
-        console.warn('Failed to load cached replies:', cacheError);
-      }
-
-      // 2. 只有MetaMask用户才从钱包获取最新回复
-      let walletReplies = [];
-      if (window.ethereum && selectedWalletInfo?.rdns === 'io.metamask') {
-        console.log('🦊 MetaMask用户，获取实时回复数据...');
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-        
-        const filter = contract.filters.ReplyCreated();
-        let logs = await contract.queryFilter(filter);
-
-        walletReplies = logs.map((log) => ({
-          replyId: Number(log.args[0]),
-          topicId: Number(log.args[1]),
-          author: log.args[2],
-          timestamp: String(log.args[3]),
-          content: log.args[4],
-          blockNumber: String(log.blockNumber),
-          transactionHash: log.transactionHash
-        }));
-      } else {
-        // 非MetaMask用户，只使用缓存数据
-        if (window.ethereum && selectedWalletInfo) {
-          console.log(`🔒 ${selectedWalletInfo.name}用户，使用缓存回复数据`);
-        } else {
-          console.log('🌐 纯浏览器用户，使用缓存回复数据');
-        }
-      }
-
-      // 3. 合并并去重
-      const mergedReplies = [...cachedReplies, ...walletReplies];
-      const uniqueReplies = mergedReplies.filter((reply, index, self) => 
-        index === self.findIndex(r => r.transactionHash === reply.transactionHash)
-      );
-      
-      allReplies = uniqueReplies.sort((a, b) => a.replyId - b.replyId);
+      // 扁平化所有回复到一个数组
+      allReplies = [];
+      data.data.topics.forEach(topic => {
+        topic.replies.forEach(reply => {
+            allReplies.push({
+            replyId: parseInt(reply.id),
+            topicId: parseInt(topic.id),
+            author: reply.author,
+            timestamp: reply.timestamp,
+            content: reply.content,
+            transactionHash: reply.id
+          });
+        });
+      });
 
     } catch (error) {
       console.error("Fetch all replies failed:", error);
@@ -213,77 +205,46 @@ let hasWallet = $state(!!window.ethereum);
     return allReplies.filter(reply => reply.topicId === topicId);
   }
 
-  // 读取主题
+  // 从The Graph获取主题数据
   async function fetchTopics() {
     loading = true;
     try {
-      let allTopics = [];
-      
-      // 1. 读取本地缓存数据
-      try {
-        const response = await fetch('/data/topics.json');
-        if (response.ok) {
-          const cachedTopics = await response.json();
-          
-          // 处理缓存数据
-          allTopics = cachedTopics.map(topic => ({
-            ...topic,
-            topicId: Number(topic.topicId)
-          }));
+      const endpoint = "https://api.studio.thegraph.com/query/1723159/chain-talk/version/latest";
+      const graphqlQuery = {
+        query: `
+          query {
+            topics(orderBy: timestamp, orderDirection: desc) {
+              id
+              author
+              content
+              timestamp
+              replies(orderBy: timestamp, orderDirection: asc) {
+                id
+                author
+                content
+              }
+            }
+          }
+        `
+      };
 
-        }
-      } catch (cacheError) {
-        console.warn('Failed to load cached topics:', cacheError);
-      }
-
-      // 2. 只有MetaMask用户才通过钱包获取实时数据
-      if (window.ethereum && selectedWalletInfo?.rdns === 'io.metamask') {
-        console.log('🦊 MetaMask用户，获取实时数据...');
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const contract = new ethers.Contract(
-          CONTRACT_ADDRESS,
-          CONTRACT_ABI,
-          provider,
-        );
-
-        const filter = contract.filters.TopicCreated();
-        let logs = await contract.queryFilter(filter);
-
-        const parsedLogs = logs.map((log) => {
-          const topic = {
-            topicId: Number(log.args[0]),
-            author: log.args[1],
-            timestamp: String(log.args[2]),
-            content: log.args[3],
-            blockNumber: String(log.blockNumber),
-            transactionHash: log.transactionHash,
-            replyCount: 0, // 稍后从预加载数据计算
-          };
-          return topic;
-        });
-
-        // 3. 合并缓存数据和钱包数据（通过transactionHash去重）
-        const mergedTopics = [...allTopics, ...parsedLogs];
-        const uniqueTopics = mergedTopics.filter((topic, index, self) => 
-          index === self.findIndex(t => t.transactionHash === topic.transactionHash)
-        );
-        
-        // 按 topicId 逆序排序（最新在前，类似 v2ex）
-        topics = uniqueTopics.sort((a, b) => b.topicId - a.topicId);
-      } else {
-        // 4. 非MetaMask用户（包括Phantom、Brave等），只使用缓存数据
-        if (window.ethereum && selectedWalletInfo) {
-          console.log(`🔒 ${selectedWalletInfo.name}用户，使用缓存数据`);
-        } else {
-          console.log('🌐 纯浏览器用户，使用缓存数据');
-        }
-        topics = allTopics.sort((a, b) => b.topicId - a.topicId);
-      }
-
-      // 5. 从预加载的回复数据计算回复数量
-      topics.forEach(topic => {
-        topic.replyCount = getReplyCount(topic.topicId);
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(graphqlQuery)
       });
+
+      const data = await response.json();
+      
+      // 转换数据格式以匹配现有结构
+      topics = data.data.topics.map((topic, index) => ({
+        topicId: parseInt(topic.id),
+        author: topic.author,
+        timestamp: topic.timestamp,
+        content: topic.content,
+        transactionHash: topic.id, // 使用id作为tx hash的替代
+        replyCount: topic.replies.length
+      }));
 
     } catch (error) {
       console.error("Fetch topics failed:", error);
@@ -297,9 +258,9 @@ onMount(async () => {
     // 设置EIP-6963钱包检测
     const cleanup = setupEIP6963();
     
-    // 无论是否有钱包都尝试获取topics和回复
+    // 直接从The Graph获取数据，无需钱包
     await fetchTopics();
-    await fetchAllReplies(); // 预加载所有回复
+    await fetchAllReplies();
     
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts) => {
