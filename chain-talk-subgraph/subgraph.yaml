@@ -16,23 +16,14 @@ dataSources:
       apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
-        - Initialized
-        - OwnershipTransferred
         - ReplyCreated
         - TopicCreated
-        - Upgraded
       abis:
         - name: ChainTalk
           file: ./abis/ChainTalk.json
       eventHandlers:
-        - event: Initialized(uint64)
-          handler: handleInitialized
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
         - event: ReplyCreated(indexed uint256,indexed uint256,indexed address,uint256,string)
           handler: handleReplyCreated
         - event: TopicCreated(indexed uint256,indexed address,uint256,string)
           handler: handleTopicCreated
-        - event: Upgraded(indexed address)
-          handler: handleUpgraded
       file: ./src/chain-talk.ts

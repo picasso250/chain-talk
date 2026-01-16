@@ -1,47 +1,38 @@
-type Initialized @entity(immutable: true) {
-  id: Bytes!
-  version: BigInt! # uint64
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+# 定义“主题”实体，并声明它是不可变的
+type Topic @entity(immutable: true) {
+  # 我们使用合约中的 topicId 作为唯一ID
+  id: ID!
+
+  # 发帖人地址
+  author: Bytes! @index
+
+  # 主题内容
+  content: String!
+
+  # 创建时的时间戳
+  timestamp: BigInt!
+
+  # 自动关联到这个主题的所有回复。
+  # @derivedFrom 指明这个字段是一个反向链接，
+  # 由 Reply 实体的 'topic' 字段计算得出。
+  replies: [Reply!]! @derivedFrom(field: "topic")
 }
 
-type OwnershipTransferred @entity(immutable: true) {
-  id: Bytes!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
+# 定义“回复”实体，并声明它是不可变的
+type Reply @entity(immutable: true) {
+  # 我们使用合约中的 replyId 作为唯一ID
+  id: ID!
 
-type ReplyCreated @entity(immutable: true) {
-  id: Bytes!
-  replyId: BigInt! # uint256
-  topicId: BigInt! # uint256
-  author: Bytes! # address
-  timestamp: BigInt! # uint256
-  content: String! # string
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
+  # 回复人地址
+  author: Bytes! @index
 
-type TopicCreated @entity(immutable: true) {
-  id: Bytes!
-  topicId: BigInt! # uint256
-  author: Bytes! # address
-  timestamp: BigInt! # uint256
-  content: String! # string
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
-}
+  # 回复内容
+  content: String!
 
-type Upgraded @entity(immutable: true) {
-  id: Bytes!
-  implementation: Bytes! # address
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  # 创建时的时间戳
+  timestamp: BigInt!
+
+  # 关联回它所属的 Topic 实体。
+  # 这是多对一关系的关键。
+  topic: Topic!
 }

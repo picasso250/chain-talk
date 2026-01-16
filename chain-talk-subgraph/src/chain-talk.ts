@@ -1,89 +1,47 @@
+// 从 generated 目录导入我们真正关心的事件类型
 import {
-  Initialized as InitializedEvent,
-  OwnershipTransferred as OwnershipTransferredEvent,
-  ReplyCreated as ReplyCreatedEvent,
   TopicCreated as TopicCreatedEvent,
-  Upgraded as UpgradedEvent
-} from "../generated/ChainTalk/ChainTalk"
-import {
-  Initialized,
-  OwnershipTransferred,
-  ReplyCreated,
-  TopicCreated,
-  Upgraded
-} from "../generated/schema"
+  ReplyCreated as ReplyCreatedEvent
+} from "../generated/ChainTalk/ChainTalk" 
 
-export function handleInitialized(event: InitializedEvent): void {
-  let entity = new Initialized(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.version = event.params.version
+// 从 generated 目录导入我们在 schema.graphql 中定义的实体类型
+import { Topic, Reply } from "../generated/schema"
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
-export function handleOwnershipTransferred(
-  event: OwnershipTransferredEvent
-): void {
-  let entity = new OwnershipTransferred(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.previousOwner = event.params.previousOwner
-  entity.newOwner = event.params.newOwner
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
-export function handleReplyCreated(event: ReplyCreatedEvent): void {
-  let entity = new ReplyCreated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.replyId = event.params.replyId
-  entity.topicId = event.params.topicId
-  entity.author = event.params.author
-  entity.timestamp = event.params.timestamp
-  entity.content = event.params.content
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-}
-
+/**
+ * 处理 TopicCreated 事件的函数
+ * 当合约发出 TopicCreated 事件时，这个函数会被调用
+ */
 export function handleTopicCreated(event: TopicCreatedEvent): void {
-  let entity = new TopicCreated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.topicId = event.params.topicId
-  entity.author = event.params.author
-  entity.timestamp = event.params.timestamp
-  entity.content = event.params.content
+  // 创建一个新的 Topic 实体，使用事件中的 topicId 作为唯一ID
+  // .toString() 是必须的，因为ID的类型是 String
+  let topic = new Topic(event.params.topicId.toString())
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  // 从事件参数中获取数据，填充到实体的字段中
+  topic.author = event.params.author
+  topic.content = event.params.content
+  topic.timestamp = event.params.timestamp
 
-  entity.save()
+  // 保存这个新的 topic 实体
+  topic.save()
 }
 
-export function handleUpgraded(event: UpgradedEvent): void {
-  let entity = new Upgraded(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  )
-  entity.implementation = event.params.implementation
+/**
+ * 处理 ReplyCreated 事件的函数
+ * 当合约发出 ReplyCreated 事件时，这个函数会被调用
+ */
+export function handleReplyCreated(event: ReplyCreatedEvent): void {
+  // 创建一个新的 Reply 实体，使用事件中的 replyId 作为唯一ID
+  let reply = new Reply(event.params.replyId.toString())
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+  // 填充回复的元数据
+  reply.author = event.params.author
+  reply.content = event.params.content
+  reply.timestamp = event.params.timestamp
 
-  entity.save()
+  // ★★★ 关键步骤：建立与 Topic 的关联关系 ★★★
+  // 将 Reply 实体的 'topic' 字段指向对应的 Topic ID
+  reply.topic = event.params.topicId.toString()
+
+  // 保存这个新的 reply 实体
+  reply.save()
 }
