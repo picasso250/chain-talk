@@ -15,28 +15,27 @@
   async function fetchReplies() {
     loading = true;
     try {
-      // 1. 优先尝试从本地缓存读取
+      let cachedReplies = [];
+      // 1. 尝试从本地缓存读取
       try {
         const response = await fetch('/data/replies.json');
         if (response.ok) {
-          const cachedReplies = await response.json();
+          const allCachedReplies = await response.json();
           // 过滤当前topic的回复
-          const topicReplies = cachedReplies.filter(reply => reply.topicId === topicId);
-          if (topicReplies.length > 0) {
+          cachedReplies = allCachedReplies.filter(reply => reply.topicId === topicId);
+          if (cachedReplies.length > 0) {
             console.log('=== CACHED REPLIES STRUCTURE ===');
-            console.log('Sample cached reply:', topicReplies[0]);
-            console.log('All keys:', Object.keys(topicReplies[0]));
+            console.log('Sample cached reply:', cachedReplies[0]);
+            console.log('All keys:', Object.keys(cachedReplies[0]));
           }
-          // 按 replyId 顺序排序（最早在前，类似 v2ex）
-          replies = topicReplies.sort((a, b) => a.replyId - b.replyId);
-          console.log(`Using cached replies for topic ${topicId}:`, replies.length);
-          return;
+          console.log(`Loaded cached replies for topic ${topicId}:`, cachedReplies.length);
         }
       } catch (cacheError) {
         console.warn('Failed to load cached replies:', cacheError);
       }
 
-      // 2. 如果没有缓存且有钱包，使用钱包RPC（兼容Phantom）
+      // 2. 总是尝试从钱包获取最新数据（如果有钱包）
+      let walletReplies = [];
       if (window.ethereum) {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
@@ -71,14 +70,19 @@
           return reply;
         });
 
-        // 按 replyId 顺序排序（最早在前，类似 v2ex）
-        replies = parsedLogs.sort((a, b) => a.replyId - b.replyId);
-        console.log(`Using wallet RPC replies for topic ${topicId}:`, replies.length);
-      } else {
-        // 3. 没有钱包且没有缓存，显示空状态
-        console.log(`No wallet and no cache available for topic ${topicId}`);
-        replies = [];
+        walletReplies = parsedLogs.sort((a, b) => a.replyId - b.replyId);
+        console.log(`Using wallet RPC replies for topic ${topicId}:`, walletReplies.length);
       }
+
+      // 3. 合并缓存数据和钱包数据（通过transactionHash去重）
+      const mergedReplies = [...cachedReplies, ...walletReplies];
+      const uniqueReplies = mergedReplies.filter((reply, index, self) => 
+        index === self.findIndex(r => r.transactionHash === reply.transactionHash)
+      );
+      
+      // 按 replyId 顺序排序（最早在前，类似 v2ex）
+      replies = uniqueReplies.sort((a, b) => a.replyId - b.replyId);
+      console.log('Merged replies - Total:', uniqueReplies.length, 'Cached:', cachedReplies.length, 'New:', walletReplies.length);
     } catch (error) {
       console.error("Fetch replies failed:", error);
       replies = [];
