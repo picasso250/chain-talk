@@ -141,11 +141,11 @@
             {reply.author.slice(0, 6)}...{reply.author.slice(-4)}
           </a>
           <a 
-            href={`https://arbiscan.io/tx/${reply.hash}`} 
+            href={`https://arbiscan.io/tx/${reply.transactionHash}`} 
             target="_blank" 
             class="hover:text-gray-700 hover:underline decoration-gray-300"
           >
-            tx/{reply.hash.slice(0, 6)}...{reply.hash.slice(-6)}
+            tx/{reply.transactionHash.slice(0, 6)}...{reply.transactionHash.slice(-6)}
           </a>
         </div>
         <div class="prose prose-sm max-w-none">
