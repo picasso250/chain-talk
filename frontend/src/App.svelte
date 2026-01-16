@@ -6,14 +6,52 @@
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
+
+  // EIP-6963 钱包管理
+  let detectedWallets = $state([]);
+  let selectedWalletInfo = $state(null);
+
 let account = $state(null);
-  let topicContent = $state("");
-  let topics = $state([]);
-  let expandedTopics = $state(new Set());
-  let loading = $state(false);
-  let isConnecting = $state(false);
-  let isPreviewMode = $state(false);
-  let hasWallet = $state(!!window.ethereum);
+let topicContent = $state("");
+let topics = $state([]);
+let allReplies = $state([]); // 预加载所有回复
+let expandedTopics = $state(new Set());
+let loading = $state(false);
+let isConnecting = $state(false);
+let isPreviewMode = $state(false);
+let hasWallet = $state(!!window.ethereum);
+
+  // EIP-6963 钱包检测
+  function setupEIP6963() {
+    const providers = [];
+    
+    const handleAnnounceProvider = (event) => {
+      const { info, provider } = event.detail;
+      
+      if (!providers.some(p => p.info.uuid === info.uuid)) {
+        providers.push(event.detail);
+        console.log('🎯 发现新钱包:', info.name, info.rdns);
+        detectedWallets = [...providers];
+        
+        // 检查是否是当前选中的钱包
+        if (window.ethereum === provider) {
+          selectedWalletInfo = info;
+          console.log('✅ 当前选择的钱包:', info.name, info.rdns);
+        }
+      }
+    };
+
+    // 监听钱包广播
+    window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
+    
+    // 主动请求钱包广播
+    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    
+    // 返回清理函数
+    return () => {
+      window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
+    };
+  }
 
   // 检查并切换网络
   async function checkNetwork() {
@@ -83,6 +121,7 @@ let account = $state(null);
 
       topicContent = "";
       await fetchTopics();
+      await fetchAllReplies(); // 预加载所有回复
     } catch (error) {
       console.error("Create topic failed:", error);
       alert("Failed to create topic. See console for details.");
@@ -107,7 +146,74 @@ let account = $state(null);
     expandedTopics = new Set(expandedTopics);
   }
 
-// 读取主题
+// 预加载所有回复
+  async function fetchAllReplies() {
+    try {
+      let cachedReplies = [];
+      
+      // 1. 读取缓存回复
+        try {
+        const response = await fetch('/data/replies.json');
+        if (response.ok) {
+          cachedReplies = await response.json();
+        }
+      } catch (cacheError) {
+        console.warn('Failed to load cached replies:', cacheError);
+      }
+
+      // 2. 只有MetaMask用户才从钱包获取最新回复
+      let walletReplies = [];
+      if (window.ethereum && selectedWalletInfo?.rdns === 'io.metamask') {
+        console.log('🦊 MetaMask用户，获取实时回复数据...');
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        
+        const filter = contract.filters.ReplyCreated();
+        let logs = await contract.queryFilter(filter);
+
+        walletReplies = logs.map((log) => ({
+          replyId: Number(log.args[0]),
+          topicId: Number(log.args[1]),
+          author: log.args[2],
+          timestamp: String(log.args[3]),
+          content: log.args[4],
+          blockNumber: String(log.blockNumber),
+          transactionHash: log.transactionHash
+        }));
+      } else {
+        // 非MetaMask用户，只使用缓存数据
+        if (window.ethereum && selectedWalletInfo) {
+          console.log(`🔒 ${selectedWalletInfo.name}用户，使用缓存回复数据`);
+        } else {
+          console.log('🌐 纯浏览器用户，使用缓存回复数据');
+        }
+      }
+
+      // 3. 合并并去重
+      const mergedReplies = [...cachedReplies, ...walletReplies];
+      const uniqueReplies = mergedReplies.filter((reply, index, self) => 
+        index === self.findIndex(r => r.transactionHash === reply.transactionHash)
+      );
+      
+      allReplies = uniqueReplies.sort((a, b) => a.replyId - b.replyId);
+
+    } catch (error) {
+      console.error("Fetch all replies failed:", error);
+      allReplies = [];
+    }
+  }
+
+  // 获取回复数量（从预加载的数据中计算）
+  function getReplyCount(topicId) {
+    return allReplies.filter(reply => reply.topicId === topicId).length;
+  }
+
+  // 获取特定主题的回复
+  function getRepliesForTopic(topicId) {
+    return allReplies.filter(reply => reply.topicId === topicId);
+  }
+
+  // 读取主题
   async function fetchTopics() {
     loading = true;
     try {
@@ -118,23 +224,21 @@ let account = $state(null);
         const response = await fetch('/data/topics.json');
         if (response.ok) {
           const cachedTopics = await response.json();
-          console.log('=== CACHED TOPICS STRUCTURE ===');
-          console.log('Sample cached topic:', cachedTopics[0]);
-          console.log('All keys:', Object.keys(cachedTopics[0] || {}));
           
           // 处理缓存数据
           allTopics = cachedTopics.map(topic => ({
             ...topic,
             topicId: Number(topic.topicId)
           }));
-          console.log('Loaded cached topics:', cachedTopics.length);
+
         }
       } catch (cacheError) {
         console.warn('Failed to load cached topics:', cacheError);
       }
 
-      // 2. 总是尝试从钱包获取最新数据
-      if (window.ethereum) {
+      // 2. 只有MetaMask用户才通过钱包获取实时数据
+      if (window.ethereum && selectedWalletInfo?.rdns === 'io.metamask') {
+        console.log('🦊 MetaMask用户，获取实时数据...');
         const provider = new ethers.BrowserProvider(window.ethereum);
         const contract = new ethers.Contract(
           CONTRACT_ADDRESS,
@@ -143,13 +247,7 @@ let account = $state(null);
         );
 
         const filter = contract.filters.TopicCreated();
-        
-        // 临时扩大查询范围以获取更多数据进行对比
-        const latestBlock = await provider.getBlockNumber();
-        const fromBlock = Math.max(0, latestBlock - 9000); // 留1000区块余量
-        
-        console.log(`Querying topics from block ${fromBlock} to ${latestBlock}`);
-        const logs = await contract.queryFilter(filter);
+        let logs = await contract.queryFilter(filter);
 
         const parsedLogs = logs.map((log) => {
           const topic = {
@@ -159,28 +257,10 @@ let account = $state(null);
             content: log.args[3],
             blockNumber: String(log.blockNumber),
             transactionHash: log.transactionHash,
-            replyCount: 0, // 初始化为0，稍后获取
+            replyCount: 0, // 稍后从预加载数据计算
           };
-          if (logs.indexOf(log) === 0) {
-            console.log('=== WALLET TOPICS STRUCTURE ===');
-            console.log('Sample wallet topic:', topic);
-            console.log('All keys:', Object.keys(topic));
-          }
           return topic;
         });
-
-        // 为每个主题获取回复数量
-        for (let topic of parsedLogs) {
-          try {
-            topic.replyCount = await contract.getReplyCount(topic.topicId);
-          } catch (error) {
-            console.warn(
-              `Failed to get reply count for topic ${topic.topicId}:`,
-              error,
-            );
-            topic.replyCount = 0;
-          }
-        }
 
         // 3. 合并缓存数据和钱包数据（通过transactionHash去重）
         const mergedTopics = [...allTopics, ...parsedLogs];
@@ -190,12 +270,21 @@ let account = $state(null);
         
         // 按 topicId 逆序排序（最新在前，类似 v2ex）
         topics = uniqueTopics.sort((a, b) => b.topicId - a.topicId);
-        console.log('Merged topics - Total:', uniqueTopics.length, 'Cached:', allTopics.length, 'New:', parsedLogs.length);
       } else {
-        // 4. 没有钱包，只使用缓存数据
+        // 4. 非MetaMask用户（包括Phantom、Brave等），只使用缓存数据
+        if (window.ethereum && selectedWalletInfo) {
+          console.log(`🔒 ${selectedWalletInfo.name}用户，使用缓存数据`);
+        } else {
+          console.log('🌐 纯浏览器用户，使用缓存数据');
+        }
         topics = allTopics.sort((a, b) => b.topicId - a.topicId);
-        console.log('Using cached topics only:', allTopics.length);
       }
+
+      // 5. 从预加载的回复数据计算回复数量
+      topics.forEach(topic => {
+        topic.replyCount = getReplyCount(topic.topicId);
+      });
+
     } catch (error) {
       console.error("Fetch topics failed:", error);
       topics = [];
@@ -204,9 +293,13 @@ let account = $state(null);
     }
   }
 
-onMount(() => {
-    // 无论是否有钱包都尝试获取topics
-    fetchTopics();
+onMount(async () => {
+    // 设置EIP-6963钱包检测
+    const cleanup = setupEIP6963();
+    
+    // 无论是否有钱包都尝试获取topics和回复
+    await fetchTopics();
+    await fetchAllReplies(); // 预加载所有回复
     
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts) => {
@@ -217,6 +310,9 @@ onMount(() => {
         }
       });
     }
+    
+    // 清理事件监听器
+    return cleanup;
   });
 </script>
 
@@ -430,7 +526,7 @@ onMount(() => {
                 <MarkdownRenderer content={topic.content} />
               </div>
 
-              <ReplySection topicId={topic.topicId} {account} />
+              <ReplySection topicId={topic.topicId} {account} replies={getRepliesForTopic(topic.topicId)} />
             </div>
           {/if}
         </article>

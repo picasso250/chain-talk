@@ -186,7 +186,64 @@ GitHub Actions (每半小时) → 链上数据获取 → JSON缓存文件 → �
 
 ---
 
+## 🎯 EIP-6963钱包检测解决方案
+
+### 问题解决
+**时间**: 2026-01-16 13:48
+**状态**: ✅ 已实现EIP-6963钱包检测
+**检测结果**: 成功识别Brave钱包、Phantom、MetaMask
+
+### 检测逻辑
+```javascript
+// EIP-6963钱包检测实现
+const handleAnnounceProvider = (event) => {
+  const { info, provider } = event.detail;
+  console.log(`🎯 发现新钱包: ${info.name} ${info.rdns}`);
+  
+  // 检查是否是当前选中的钱包
+  if (window.ethereum === provider) {
+    console.log(`✅ 当前钱包: ${info.name} ${info.rdns}`);
+    selectedWalletInfo = info;
+  }
+};
+```
+
+### 检测结果示例
+```
+🎯 发现新钱包: Brave 钱包 com.brave.wallet
+🎯 发现新钱包: Phantom app.phantom  
+🎯 发现新钱包: MetaMask io.metamask
+✅ 当前钱包: MetaMask io.metamask
+```
+
+### 核心决策：MetaMask优先策略
+**原理**: 只有MetaMask用户才通过钱包provider获取实时数据，其他钱包降级为缓存用户
+
+**实现策略**:
+- **MetaMask用户** (`io.metamask`): 完整功能，实时数据查询
+- **其他钱包用户** (`app.phantom`, `com.brave.wallet`): 视同无钱包用户，使用缓存数据
+- **纯浏览器用户**: 使用缓存数据
+
+**技术优势**:
+1. **避免复杂错误处理**: 不再需要try-catch处理Phantom的10,000区块限制
+2. **代码简洁**: 删除phantom-adapter.js中的复杂逻辑
+3. **稳定性优先**: 保证MetaMask用户获得最佳体验
+4. **逐步迭代**: 后续研究Phantom具体兼容性问题
+
+**用户体验影响**:
+- MetaMask用户: 实时数据，完整功能 ✅
+- Phantom用户: 延迟数据（缓存），但基本功能可用 ⚠️
+- 其他钱包: 延迟数据（缓存），基本功能可用 ⚠️
+
+### 下一步计划
+1. **实现钱包白名单逻辑**: 在fetchTopics中检测`selectedWalletInfo?.rdns`
+2. **性能优化**: 减少无意义钱包数据查询
+3. **用户告知**: 考虑在UI提示"非MetaMask用户使用缓存数据"
+4. **长期研究**: 深入分析Phantom钱包的具体兼容性问题
+
+---
+
 **更新日期**: 2026-01-16  
-**状态**: 🔄 重新评估架构方向  
-**优先级**: 🎯 缓存系统核心地位（最高优先级）  
-**技术焦点**: 📊 简化钱包检测，保持缓存稳定
+**状态**: ✅ EIP-6963检测完成，实施MetaMask优先策略  
+**优先级**: 🎯 实现钱包白名单逻辑（立即）  
+**技术焦点**: 📊 基于rdns的钱包类型判断
