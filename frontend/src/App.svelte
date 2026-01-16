@@ -149,7 +149,7 @@ let account = $state(null);
         const fromBlock = Math.max(0, latestBlock - 9000); // 留1000区块余量
         
         console.log(`Querying topics from block ${fromBlock} to ${latestBlock}`);
-        const logs = await contract.queryFilter(filter, fromBlock, "latest");
+        const logs = await contract.queryFilter(filter);
 
         const parsedLogs = logs.map((log) => {
           const topic = {

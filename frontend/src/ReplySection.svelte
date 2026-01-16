@@ -50,7 +50,7 @@
         const fromBlock = Math.max(0, latestBlock - 9000); // 留1000区块余量
         
         console.log(`Querying replies for topic ${topicId} from block ${fromBlock} to ${latestBlock}`);
-        const logs = await contract.queryFilter(filter, fromBlock, "latest");
+        const logs = await contract.queryFilter(filter);
 
         const parsedLogs = logs.map((log, index) => {
           const reply = {
