@@ -1,0 +1,38 @@
+specVersion: 1.3.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ChainTalk
+    network: arbitrum-one
+    source:
+      address: "0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380"
+      abi: ChainTalk
+      startBlock: 419912164
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Initialized
+        - OwnershipTransferred
+        - ReplyCreated
+        - TopicCreated
+        - Upgraded
+      abis:
+        - name: ChainTalk
+          file: ./abis/ChainTalk.json
+      eventHandlers:
+        - event: Initialized(uint64)
+          handler: handleInitialized
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: ReplyCreated(indexed uint256,indexed uint256,indexed address,uint256,string)
+          handler: handleReplyCreated
+        - event: TopicCreated(indexed uint256,indexed address,uint256,string)
+          handler: handleTopicCreated
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+      file: ./src/chain-talk.ts
