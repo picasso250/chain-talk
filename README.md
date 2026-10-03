@@ -42,6 +42,7 @@
 - **部署区块**: 26111445
 - **编译器**: solc 0.8.37
 - **区块浏览器**: [Etherscan](https://etherscan.io/address/0xec3639B4CC756d39e996447dE1787B09EF646b6F)
+- **源码验证**: [Sourcify](https://repo.sourcify.dev/1/0xec3639B4CC756d39e996447dE1787B09EF646b6F) — 创建和运行字节码均为 `exact_match`（2026-10-03）；[Etherscan](https://etherscan.io/address/0xec3639B4CC756d39e996447dE1787B09EF646b6F#code) 已通过验证（`Pass - Verified`）。
 - **正式网站**: https://talk.io99.xyz
 
 ### 合约源码

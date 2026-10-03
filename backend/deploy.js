@@ -1,12 +1,6 @@
-// Proxy must be set BEFORE requiring ethers, because ethers caches the https agent on load.
-const https = require('node:https');
-const { HttpsProxyAgent } = require('https-proxy-agent');
+// Proxy is handled by Node.js --use-env-proxy flag (reads HTTPS_PROXY/HTTP_PROXY env vars).
+// Run with: node --use-env-proxy deploy.js
 require('dotenv').config({ path: require('node:path').join(__dirname, '.env') });
-const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
-if (proxyUrl) {
-  https.globalAgent = new HttpsProxyAgent(proxyUrl);
-  console.log('Using proxy:', proxyUrl);
-}
 
 const { ethers } = require('ethers');
 const fs = require('node:fs');
