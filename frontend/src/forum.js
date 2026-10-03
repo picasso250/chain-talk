@@ -8,7 +8,11 @@ export async function postMessage(provider, content, replyTo = "0") {
   const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
   const tx = await contract.post(normalizedContent, replyTo);
   const receipt = await tx.wait();
-  return confirmedEvent(receipt, contract.interface, signer.provider);
+  try {
+    return await confirmedEvent(receipt, contract.interface, signer.provider);
+  } catch {
+    throw new Error(`Transaction confirmed (${receipt.hash}), but the post could not be displayed. Refresh to reload it; do not submit again.`);
+  }
 }
 
 export async function loadPosts(request = fetch) {
@@ -76,11 +80,17 @@ export async function confirmedEvent(receipt, contractInterface, provider) {
     const event = contractInterface.parseLog(log);
     if (event?.name !== "Posted") continue;
     const { args } = event;
-    const block = await provider.getBlock(receipt.blockNumber);
+    let timestamp = "0";
+    try {
+      const block = await provider.getBlock(receipt.blockNumber);
+      timestamp = (block?.timestamp ?? 0).toString();
+    } catch {
+      // The post is confirmed; indexing will supply the timestamp later.
+    }
     return {
       id: args.id.toString(), replyTo: args.replyTo.toString(),
       author: args.author, content: args.content,
-      timestamp: (block?.timestamp ?? 0).toString(),
+      timestamp,
       transactionHash: receipt.hash, confirmedLocally: true,
     };
   }

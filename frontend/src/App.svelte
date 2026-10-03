@@ -6,19 +6,8 @@
   import { readCachedPosts, cachePosts } from "./cache.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
+  import { formatTime } from "./format.js";
 
-  // Format Unix timestamp to human-readable date
-  function formatTime(timestamp) {
-    if (!timestamp) return "";
-    const date = new Date(Number(timestamp) * 1000);
-    return date.toLocaleString(undefined, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
 
   // Measure after Svelte has applied the bound value, including programmatic changes.
   function autoResize(textarea) {
@@ -126,11 +115,12 @@
       posts = [topic, ...posts.filter(item => item.id !== topic.id)];
 
       topicContent = "";
+      isPreviewMode = false;
       void fetchTopics();
 
     } catch (error) {
       console.error("Create topic failed:", error);
-      alert("Failed to create topic. See console for details.");
+      alert(error.message || "Unable to submit topic.");
     } finally {
       posting = false;
     }
@@ -302,6 +292,7 @@
             <textarea
               use:autoResize
               bind:value={topicContent}
+              disabled={posting}
               placeholder="Start a conversation. First line becomes the title..."
               class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
               style="min-height: 96px; max-height: 256px;"
@@ -316,6 +307,7 @@
             <div class="flex items-center gap-2">
               <button
                 onclick={() => isPreviewMode = !isPreviewMode}
+                disabled={posting}
                 class="text-sm px-3 py-2 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300"
               >
                 {isPreviewMode ? "← Back to edit" : "Preview"}

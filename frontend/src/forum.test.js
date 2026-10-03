@@ -24,6 +24,10 @@ test('receipt preserves parent, author, content and hash', async () => {
   const log=iface.encodeEventLog(iface.getEvent('Posted'),[3n,2n,author,'nested']);
   const record=await confirmedEvent({hash:'0xreal',blockNumber:123,logs:[{...log,address:CONTRACT_ADDRESS}]},iface,{getBlock:async()=>({timestamp:42})});
   assert.deepEqual(record,{id:'3',replyTo:'2',author,timestamp:'42',content:'nested',transactionHash:'0xreal',confirmedLocally:true});
+  const pending=await confirmedEvent({hash:'0xreal',blockNumber:123,logs:[{...log,address:CONTRACT_ADDRESS}]},iface,{getBlock:async()=>{throw new Error('RPC unavailable');}});
+  assert.equal(pending.timestamp,'0');
+  assert.equal(pending.transactionHash,'0xreal');
+  assert.equal(pending.confirmedLocally,true);
 });
 test('subgraph paginates and rejects service or indexing failures', async () => {
   const page = Array.from({length:1000}, (_, i) => post(String(i).padStart(4,'0')));

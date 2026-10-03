@@ -1,6 +1,7 @@
 <script>
   import { postMessage } from "./forum.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
+  import { formatTime } from "./format.js";
 
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
@@ -17,18 +18,6 @@
     });
   }
 
-  // Format Unix timestamp to human-readable date
-  function formatTime(timestamp) {
-    if (!timestamp) return "";
-    const date = new Date(Number(timestamp) * 1000);
-    return date.toLocaleString(undefined, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
 
   // 提交回复
   async function submitReply() {
@@ -43,7 +32,7 @@
       replyTarget = null;
     } catch (error) {
       console.error("Create reply failed:", error);
-      alert("Failed to create reply. See console for details.");
+      alert(error.message || "Unable to submit reply.");
     } finally {
       submitting = false;
     }
@@ -116,6 +105,7 @@
             <textarea
               use:autoResize
               bind:value={replyContent}
+              disabled={submitting}
               placeholder="Write a reply..."
               class="w-full bg-transparent text-sm outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
             ></textarea>
@@ -123,6 +113,7 @@
           <div class="flex justify-end items-center gap-2 mt-3">
             <button
               onclick={() => isPreviewMode = !isPreviewMode}
+              disabled={submitting}
               class="text-sm px-3 py-1 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300"
             >
               {isPreviewMode ? "← Back to edit" : "Preview"}
