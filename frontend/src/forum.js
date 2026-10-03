@@ -5,6 +5,7 @@ import { ensureNetwork } from "./wallet.js";
 // Sepolia testnet RPC for reading events directly (no The Graph needed during testing)
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 const DEPLOY_BLOCK = 11834966;
+const BLOCK_CHUNK = 5000; // Read logs in chunks to avoid RPC limits
 
 export async function postMessage(provider, content, replyTo = "0") {
   await ensureNetwork(provider);
@@ -16,16 +17,28 @@ export async function postMessage(provider, content, replyTo = "0") {
 
 export async function loadPosts() {
   const provider = new JsonRpcProvider(RPC_URL);
-  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-  const events = await contract.queryFilter("Posted", DEPLOY_BLOCK, "latest");
-  return events.map(e => ({
-    id: e.args.id.toString(),
-    replyTo: e.args.replyTo.toString(),
-    author: e.args.author,
-    content: e.args.content,
-    timestamp: e.args.timestamp.toString(),
-    transactionHash: e.transactionHash,
-  }));
+  try {
+    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const latest = await provider.getBlockNumber();
+    const posts = [];
+    for (let from = DEPLOY_BLOCK; from <= latest; from += BLOCK_CHUNK) {
+      const to = Math.min(from + BLOCK_CHUNK - 1, latest);
+      const events = await contract.queryFilter("Posted", from, to);
+      for (const e of events) {
+        posts.push({
+          id: e.args.id.toString(),
+          replyTo: e.args.replyTo.toString(),
+          author: e.args.author,
+          content: e.args.content,
+          timestamp: e.args.timestamp.toString(),
+          transactionHash: e.transactionHash,
+        });
+      }
+    }
+    return posts;
+  } finally {
+    provider.destroy();
+  }
 }
 
 export function mergePosts(indexed, current) {

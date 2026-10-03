@@ -1,15 +1,16 @@
+// Proxy must be set BEFORE requiring ethers, because ethers caches the https agent on load.
+const https = require('node:https');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+require('dotenv').config({ path: require('node:path').join(__dirname, '.env') });
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+if (proxyUrl) {
+  https.globalAgent = new HttpsProxyAgent(proxyUrl);
+  console.log('Using proxy:', proxyUrl);
+}
+
 const { ethers } = require('ethers');
 const fs = require('node:fs');
 const path = require('node:path');
-const { ProxyAgent, setGlobalDispatcher } = require('undici');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
-
-// Node.js fetch does not honor HTTP_PROXY/HTTPS_PROXY automatically; wire it up.
-const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
-if (proxyUrl) {
-  setGlobalDispatcher(new ProxyAgent(proxyUrl));
-  console.log('Using proxy:', proxyUrl);
-}
 
 async function main() {
   const { RPC_URL, PRIVATE_KEY, CHAIN_ID } = process.env;
