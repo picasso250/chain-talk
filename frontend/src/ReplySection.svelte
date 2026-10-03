@@ -1,19 +1,22 @@
 <script>
   import { postMessage } from "./forum.js";
+  import { getNetworkConfig, DEFAULT_CHAIN_ID } from "./constants.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
-  let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
+  let { topicId, account, walletProvider = null, replies = [], onReplyCreated, chainId = DEFAULT_CHAIN_ID } = $props();
 
   let replyContent = $state("");
   let submitting = $state(false);
   let replyTarget = $state(null);
+  let networkConfig = $derived(getNetworkConfig(chainId));
+
   // 提交回复
   async function submitReply() {
     if (submitting || !replyContent.trim()) return;
-    
+
     submitting = true;
     try {
-      const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId);
+      const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId, chainId);
       onReplyCreated(reply);
       replyContent = "";
       replyTarget = null;
@@ -38,7 +41,7 @@
             <div class="text-xs text-gray-500">{replies.length} comments</div>
         {/if}
     </div>
-    
+
     {#if replies.length === 0}
         <div class="text-gray-500 text-sm italic py-2">No replies yet.</div>
     {/if}
@@ -47,12 +50,12 @@
         <div id={`post-${reply.id}`} class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{reply.timestamp}</span>
-          <a href={`https://sepolia.etherscan.io/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
+          <a href={`https://${networkConfig.etherscanPrefix}/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
             {reply.author.slice(0, 6)}...{reply.author.slice(-4)}
           </a>
-          <a 
-            href={`https://sepolia.etherscan.io/tx/${reply.transactionHash}`} 
-            target="_blank" 
+          <a
+            href={`https://${networkConfig.etherscanPrefix}/tx/${reply.transactionHash}`}
+            target="_blank"
             class="hover:text-gray-700 hover:underline decoration-gray-300"
           >
             tx/{reply.transactionHash.slice(0, 6)}...{reply.transactionHash.slice(-6)}
@@ -86,7 +89,7 @@
             class="w-full bg-transparent text-sm outline-none resize-none h-20 placeholder-gray-400 leading-relaxed"
           ></textarea>
           <div class="flex justify-end mt-3">
-            <button 
+            <button
               onclick={submitReply}
               disabled={!replyContent.trim() || submitting}
               class="bg-green-600 text-white hover:bg-green-700 px-4 py-1 text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"

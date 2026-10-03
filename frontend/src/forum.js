@@ -1,29 +1,28 @@
 import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants.js";
-import { ensureNetwork } from "./wallet.js";
+import { CONTRACT_ABI, getNetworkConfig, DEFAULT_CHAIN_ID } from "./constants.js";
+import { ensureNetwork, getCurrentChainId } from "./wallet.js";
 
-// Sepolia testnet RPC for reading events directly (no The Graph needed during testing)
-const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-const DEPLOY_BLOCK = 11835312;
 const BLOCK_CHUNK = 5000; // Read logs in chunks to avoid RPC limits
 
-export async function postMessage(provider, content, replyTo = "0") {
-  await ensureNetwork(provider);
+export async function postMessage(provider, content, replyTo = "0", chainId = DEFAULT_CHAIN_ID) {
+  await ensureNetwork(provider, chainId);
+  const config = getNetworkConfig(chainId);
   const signer = await new BrowserProvider(provider).getSigner();
-  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+  const contract = new Contract(config.contractAddress, CONTRACT_ABI, signer);
   const tx = await contract.post(content, replyTo);
   const receipt = await tx.wait();
   return confirmedEvent(receipt, contract.interface, signer.provider);
 }
 
-export async function loadPosts() {
-  const provider = new JsonRpcProvider(RPC_URL);
+export async function loadPosts(chainId = DEFAULT_CHAIN_ID) {
+  const config = getNetworkConfig(chainId);
+  const provider = new JsonRpcProvider(config.rpcUrl);
   try {
-    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const contract = new Contract(config.contractAddress, CONTRACT_ABI, provider);
     const latest = await provider.getBlockNumber();
     const posts = [];
     const blockCache = new Map();
-    for (let from = DEPLOY_BLOCK; from <= latest; from += BLOCK_CHUNK) {
+    for (let from = config.deployBlock; from <= latest; from += BLOCK_CHUNK) {
       const to = Math.min(from + BLOCK_CHUNK - 1, latest);
       const events = await contract.queryFilter("Posted", from, to);
       for (const e of events) {
@@ -77,7 +76,7 @@ export function discussionTopics(posts) {
 
 export async function confirmedEvent(receipt, contractInterface, provider) {
   for (const log of receipt.logs) {
-    if (log.address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) continue;
+    // Match by event signature rather than address — works across networks
     const event = contractInterface.parseLog(log);
     if (event?.name !== "Posted") continue;
     const { args } = event;

@@ -1,8 +1,9 @@
 <script>
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
-  import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
+  import { discoverWallets, connectProvider, watchAccount, watchChain, getCurrentChainId } from "./wallet.js";
   import { loadPosts, postMessage, mergePosts, discussionTopics } from "./forum.js";
+  import { getNetworkConfig, DEFAULT_CHAIN_ID } from "./constants.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
@@ -12,8 +13,11 @@
   let showWalletPicker = $state(false);
   let walletPickerElement;
   let removeWalletListeners = () => {};
+  let removeChainListener = () => {};
 
   let account = $state(null);
+  let currentChainId = $state(DEFAULT_CHAIN_ID);
+  let networkConfig = $derived(getNetworkConfig(currentChainId));
   let topicContent = $state("");
   let posts = $state([]);
   let topics = $derived(discussionTopics(posts));
@@ -31,14 +35,21 @@
     try {
       const address = await connectProvider(provider);
       removeWalletListeners();
+      removeChainListener();
       walletProvider = provider;
       account = address;
+      currentChainId = await getCurrentChainId(provider);
       removeWalletListeners = watchAccount(provider, address => {
         if (walletProvider !== provider) return;
         if (address === null) disconnectWallet();
         else account = address;
       });
+      removeChainListener = watchChain(provider, chainId => {
+        currentChainId = chainId;
+        void fetchTopics();
+      });
       showWalletPicker = false;
+      void fetchTopics();
 
     } catch (error) {
       console.error("Connection failed:", error);
@@ -82,9 +93,12 @@
   // 断开钱包
   function disconnectWallet() {
     removeWalletListeners();
+    removeChainListener();
     removeWalletListeners = () => {};
+    removeChainListener = () => {};
     account = null;
     walletProvider = null;
+    currentChainId = DEFAULT_CHAIN_ID;
   }
 
   // 创建主题
@@ -97,7 +111,7 @@
 
     posting = true;
     try {
-      const topic = await postMessage(walletProvider, topicContent);
+      const topic = await postMessage(walletProvider, topicContent, "0", currentChainId);
       posts = [topic, ...posts.filter(item => item.id !== topic.id)];
 
       topicContent = "";
@@ -132,7 +146,7 @@
     loadingTopics = true;
     loadError = "";
     try {
-      const indexedPosts = await loadPosts();
+      const indexedPosts = await loadPosts(currentChainId);
       posts = mergePosts(indexedPosts, posts);
     } catch (error) {
       console.error("Fetch topics failed:", error);
@@ -183,9 +197,10 @@
       </h1>
 
       <div class="flex items-center justify-between sm:justify-end gap-3">
-        <!-- Sepolia Network Badge -->
+        <!-- Network Badge (dynamic) -->
         <div
-          class="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full text-xs font-medium text-purple-700"
+          class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+          style="background-color: {networkConfig.color}15; border: 1px solid {networkConfig.color}40; color: {networkConfig.color};"
         >
           <!-- Ethereum Logo SVG -->
           <svg
@@ -195,10 +210,10 @@
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <path d="M12 2L6 12L12 15.5L18 12L12 2Z" fill="#627EEA" />
-            <path d="M6 13.5L12 17L18 13.5L12 22L6 13.5Z" fill="#627EEA" opacity="0.7" />
+            <path d="M12 2L6 12L12 15.5L18 12L12 2Z" fill={networkConfig.color} />
+            <path d="M6 13.5L12 17L18 13.5L12 22L6 13.5Z" fill={networkConfig.color} opacity="0.7" />
           </svg>
-          Sepolia
+          {networkConfig.name}
         </div>
 
         <div class="relative" bind:this={walletPickerElement}>
@@ -377,14 +392,14 @@
                     >{topic.timestamp}</span
                   >
                   <a
-                    href="https://sepolia.etherscan.io/address/{topic.author}"
+                    href="https://{networkConfig.etherscanPrefix}/address/{topic.author}"
                     target="_blank"
                     class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300"
                   >
                     {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
                   </a>
                   <a
-                    href="https://sepolia.etherscan.io/tx/{topic.transactionHash}"
+                    href="https://{networkConfig.etherscanPrefix}/tx/{topic.transactionHash}"
                     target="_blank"
                     class="hover:text-gray-700 hover:underline decoration-gray-300"
                     onclick={(e) => e.stopPropagation()}
@@ -410,7 +425,7 @@
                 <MarkdownRenderer content={topic.content} />
               </div>
 
-              <ReplySection topicId={topic.id} {account} {walletProvider} replies={topic.replies} {onReplyCreated} />
+              <ReplySection topicId={topic.id} {account} {walletProvider} replies={topic.replies} {onReplyCreated} chainId={currentChainId} />
             </div>
           {/if}
         </article>

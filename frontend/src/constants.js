@@ -1,8 +1,30 @@
-// Sepolia Testnet Deployment (v2, no timestamp)
-export const CONTRACT_ADDRESS = "0x759723E3869181616D6567458b59bCbA365FEcEe";
+// Network configurations
+export const NETWORKS = {
+  "0xaa36a7": {
+    name: "Sepolia",
+    chainId: 11155111,
+    contractAddress: "0x759723E3869181616D6567458b59bCbA365FEcEe",
+    rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
+    deployBlock: 11835312,
+    etherscanPrefix: "sepolia.etherscan.io",
+    color: "#7b61ff",
+  },
+  "0x1": {
+    name: "Ethereum",
+    chainId: 1,
+    contractAddress: "", // TODO: deploy to mainnet
+    rpcUrl: "https://ethereum-rpc.publicnode.com",
+    deployBlock: 0, // TODO: set after mainnet deployment
+    etherscanPrefix: "etherscan.io",
+    color: "#627eea",
+  },
+};
 
-// Sepolia Chain ID (Hex)
-export const TARGET_CHAIN_ID = "0xaa36a7"; // 11155111
+export const DEFAULT_CHAIN_ID = "0xaa36a7"; // Sepolia for testing
+
+export function getNetworkConfig(chainId) {
+  return NETWORKS[chainId] || NETWORKS[DEFAULT_CHAIN_ID];
+}
 
 export const CONTRACT_ABI = [
   {

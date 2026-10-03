@@ -1,5 +1,5 @@
 import { BrowserProvider } from "ethers";
-import { TARGET_CHAIN_ID } from "./constants.js";
+import { NETWORKS, DEFAULT_CHAIN_ID } from "./constants.js";
 
 export function discoverWallets(onWallets, target = window) {
   const wallets = new Map();
@@ -13,17 +13,22 @@ export function discoverWallets(onWallets, target = window) {
   return () => target.removeEventListener("eip6963:announceProvider", announce);
 }
 
-export async function ensureNetwork(provider) {
+export async function ensureNetwork(provider, targetChainId = DEFAULT_CHAIN_ID) {
   if (!provider?.request) throw new Error("Wallet not connected");
-  if (await provider.request({ method: "eth_chainId" }) !== TARGET_CHAIN_ID) {
+  const current = await provider.request({ method: "eth_chainId" });
+  if (current !== targetChainId) {
     await provider.request({
-      method: "wallet_switchEthereumChain", params: [{ chainId: TARGET_CHAIN_ID }],
+      method: "wallet_switchEthereumChain", params: [{ chainId: targetChainId }],
     });
   }
 }
 
+export async function getCurrentChainId(provider) {
+  if (!provider?.request) return DEFAULT_CHAIN_ID;
+  return await provider.request({ method: "eth_chainId" });
+}
+
 export async function connectProvider(provider) {
-  await ensureNetwork(provider);
   await provider.request({ method: "eth_requestAccounts" });
   return (await new BrowserProvider(provider).getSigner()).getAddress();
 }
@@ -37,4 +42,10 @@ export function watchAccount(provider, onAccount) {
     provider.removeListener("accountsChanged", changed);
     provider.removeListener("disconnect", disconnected);
   };
+}
+
+export function watchChain(provider, onChainChanged) {
+  const changed = chainId => onChainChanged(chainId);
+  provider.on("chainChanged", changed);
+  return () => provider.removeListener("chainChanged", changed);
 }
