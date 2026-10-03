@@ -30,10 +30,14 @@
 - **编译器**: solc 0.8.37
 - **区块浏览器**: [Sepolia Etherscan](https://sepolia.etherscan.io/address/0x759723E3869181616D6567458b59bCbA365FEcEe)
 
-### 以太坊主网（待部署）
+### 以太坊主网（已上线）
 
-- **合约地址**: 待部署
+- **合约地址**: `0xec3639B4CC756d39e996447dE1787B09EF646b6F`
 - **Chain ID**: 1 (0x1)
+- **部署区块**: 26111445
+- **编译器**: solc 0.8.37
+- **区块浏览器**: [Etherscan](https://etherscan.io/address/0xec3639B4CC756d39e996447dE1787B09EF646b6F)
+- **正式网站**: https://talk.io99.xyz
 
 ### 合约源码
 

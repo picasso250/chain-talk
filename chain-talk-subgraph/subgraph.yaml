@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ChainTalk
-    network: sepolia
+    network: mainnet
     source:
       address: "0xec3639B4CC756d39e996447dE1787B09EF646b6F"
       abi: ChainTalk
-      startBlock: 11834966
+      startBlock: 26111445
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
