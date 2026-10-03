@@ -67,12 +67,4 @@ contract ChainTalk {
     function getReplyIdCounter() public view returns (uint256) {
         return _replyIdCounter;
     }
-
-
-    /**
-     * @dev 获取合约版本
-     */
-    function version() public pure returns (string memory) {
-        return "1.0.0";
-    }
 }

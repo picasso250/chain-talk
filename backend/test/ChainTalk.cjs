@@ -39,7 +39,6 @@ test('empty topics revert without consuming IDs', async () => {
 });
 test('no initialization, ownership or upgrade entry points', async () => {
   const f = await deploy();
-  assert.equal(await f.version(), '1.0.0');
   const admin = new ethers.Interface(['function initialize()', 'function owner()', 'function transferOwnership(address)', 'function renounceOwnership()', 'function upgradeTo(address)', 'function upgradeToAndCall(address,bytes)', 'function proxiableUUID()']);
   for (const [name,args] of [['initialize',[]],['owner',[]],['transferOwnership',[author.address]],['renounceOwnership',[]],['upgradeTo',[author.address]],['upgradeToAndCall',[author.address,'0x']],['proxiableUUID',[]]]) {
     assert.equal(f.interface.getFunction(name), null);
