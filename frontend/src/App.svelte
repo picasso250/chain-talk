@@ -1,12 +1,10 @@
 <script>
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
-  import { ethers } from "ethers";
-  import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./constants";
-  import { loadTopics, confirmedEvent, mergeTopics } from "./forum.js";
+  import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
+  import { loadTopics, postTopic, mergeTopics } from "./forum.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
-
 
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
@@ -15,93 +13,31 @@
   let walletPickerElement;
   let removeWalletListeners = () => {};
 
-let account = $state(null);
-let topicContent = $state("");
-let topics = $state([]);
-let expandedTopics = $state(new Set());
-let loadingTopics = $state(false);
-let posting = $state(false);
-let loadError = $state("");
-let isConnecting = $state(false);
-let isPreviewMode = $state(false);
-
-  // EIP-6963 钱包检测
-  function setupEIP6963() {
-    const providers = [];
-    
-    const handleAnnounceProvider = (event) => {
-      const { info, provider } = event.detail;
-      
-      if (!providers.some(p => p.info.uuid === info.uuid)) {
-        providers.push(event.detail);
-        console.log('🎯 发现新钱包:', info.name, info.rdns);
-        detectedWallets = [...providers];
-        
-      }
-    };
-
-    // 监听钱包广播
-    window.addEventListener('eip6963:announceProvider', handleAnnounceProvider);
-    
-    // 主动请求钱包广播
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
-    
-    // 返回清理函数
-    return () => {
-      window.removeEventListener('eip6963:announceProvider', handleAnnounceProvider);
-    };
-  }
-
-  // 检查并切换网络
-  async function checkNetwork(provider = walletProvider || window.ethereum) {
-    if (!provider?.request) return false;
-    const chainId = await provider.request({ method: "eth_chainId" });
-    if (chainId !== TARGET_CHAIN_ID) {
-      try {
-        await provider.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: TARGET_CHAIN_ID }],
-        });
-        return true;
-      } catch (switchError) {
-        console.error("Failed to switch network:", switchError);
-        alert("Please switch your wallet to Arbitrum One network.");
-        return false;
-      }
-    }
-    return true;
-  }
+  let account = $state(null);
+  let topicContent = $state("");
+  let topics = $state([]);
+  let expandedTopics = $state(new Set());
+  let loadingTopics = $state(false);
+  let posting = $state(false);
+  let loadError = $state("");
+  let isConnecting = $state(false);
+  let isPreviewMode = $state(false);
 
   // 用指定 provider 连接
   async function connectWithProvider(provider) {
     if (isConnecting) return;
     isConnecting = true;
     try {
-      const isCorrectNetwork = await checkNetwork(provider);
-      if (!isCorrectNetwork) return;
-
-      await provider.request({ method: "eth_requestAccounts" });
-      const ethersProvider = new ethers.BrowserProvider(provider);
-      const signer = await ethersProvider.getSigner();
-      account = await signer.getAddress();
+      const address = await connectProvider(provider);
       removeWalletListeners();
       walletProvider = provider;
-      const onAccountsChanged = (accounts) => {
+      account = address;
+      removeWalletListeners = watchAccount(provider, address => {
         if (walletProvider !== provider) return;
-        if (accounts.length === 0) disconnectWallet();
-        else account = accounts[0];
-      };
-      const onDisconnect = () => {
-        if (walletProvider === provider) disconnectWallet();
-      };
-      provider.on("accountsChanged", onAccountsChanged);
-      provider.on("disconnect", onDisconnect);
-      removeWalletListeners = () => {
-        provider.removeListener("accountsChanged", onAccountsChanged);
-        provider.removeListener("disconnect", onDisconnect);
-      };
+        if (address === null) disconnectWallet();
+        else account = address;
+      });
       showWalletPicker = false;
-
 
     } catch (error) {
       console.error("Connection failed:", error);
@@ -160,21 +96,7 @@ let isPreviewMode = $state(false);
 
     posting = true;
     try {
-      const activeProvider = walletProvider || window.ethereum;
-      if (!activeProvider) throw new Error("Wallet not connected");
-      const provider = new ethers.BrowserProvider(activeProvider);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        CONTRACT_ABI,
-        signer,
-      );
-
-      const tx = await contract.createTopic(topicContent);
-      console.log("Transaction sent:", tx.hash);
-
-      const receipt = await tx.wait();
-      const topic = confirmedEvent(receipt, contract.interface, "TopicCreated");
+      const topic = await postTopic(walletProvider, topicContent);
       topics = [topic, ...topics.filter(item => item.id !== topic.id)];
 
       topicContent = "";
@@ -226,9 +148,9 @@ let isPreviewMode = $state(false);
     void fetchTopics();
   }
 
-onMount(() => {
+  onMount(() => {
     // 设置EIP-6963钱包检测
-    const cleanup = setupEIP6963();
+    const cleanup = discoverWallets(wallets => { detectedWallets = wallets; });
     
     // 直接从The Graph获取数据，无需钱包
     void fetchTopics();

@@ -1,4 +1,20 @@
-import { CONTRACT_ADDRESS } from "./constants.js";
+import { BrowserProvider, Contract } from "ethers";
+import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants.js";
+import { ensureNetwork } from "./wallet.js";
+
+async function submit(provider, method, args, event) {
+  await ensureNetwork(provider);
+  const signer = await new BrowserProvider(provider).getSigner();
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+  const tx = await contract[method](...args);
+  return confirmedEvent(await tx.wait(), contract.interface, event);
+}
+
+export const postTopic = (provider, content) =>
+  submit(provider, "createTopic", [content], "TopicCreated");
+
+export const postReply = (provider, topicId, content) =>
+  submit(provider, "createReply", [topicId, content], "ReplyCreated");
 
 const endpoint = "https://api.studio.thegraph.com/query/1723159/chain-talk/version/latest";
 

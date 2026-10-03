@@ -1,7 +1,5 @@
 <script>
-  import { ethers } from "ethers";
-  import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants";
-  import { confirmedEvent } from "./forum.js";
+  import { postReply } from "./forum.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
@@ -14,18 +12,8 @@
     
     submitting = true;
     try {
-      const activeProvider = walletProvider || window.ethereum;
-      if (!activeProvider) throw new Error("Wallet not connected");
-      const provider = new ethers.BrowserProvider(activeProvider);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-      const tx = await contract.createReply(topicId, replyContent);
-      console.log("Reply transaction sent:", tx.hash);
-      
-      const receipt = await tx.wait();
-      onReplyCreated(confirmedEvent(receipt, contract.interface, "ReplyCreated"));
-      
+      const reply = await postReply(walletProvider, topicId, replyContent);
+      onReplyCreated(reply);
       replyContent = "";
     } catch (error) {
       console.error("Create reply failed:", error);
