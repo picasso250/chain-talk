@@ -7,7 +7,8 @@
 
 ## 🌟 在线演示
 
-- **测试网体验**: https://chain-talk-sepolia.xi-aochi.workers.dev/
+- **正式网站**: https://talk.io99.xyz
+- **测试网**: https://chain-talk-sepolia.xi-aochi.workers.dev/
 - **零门槛访问**: 无需连接钱包即可浏览所有内容
 - **完全去中心化**: 所有数据存储在以太坊链上
 
@@ -18,7 +19,11 @@
 - 🔒 **固定规则** - 普通合约，无代理、无 owner、无升级入口
 - ⚡ **极简合约** - 仅 22 行代码，1 个变量，1 个函数，1 个事件
 - 🎨 **现代化 UI** - 基于 Svelte 5 (Runes) + Tailwind CSS
-- 🌐 **固定主网** - 正式前端的数据源和合约地址固定为以太坊主网
+- 📝 **Markdown 支持** - 主题和回复都支持 Markdown，带 Preview 预览
+- 💬 **楼中楼回复** - 支持回复的回复，无限嵌套
+- ⚡ **秒开体验** - localStorage 缓存，打开即显示，后台增量更新
+- 🌐 **多钱包支持** - EIP-6963 标准，兼容 MetaMask、Rabby 等
+- 💰 **极低成本** - 发一帖约 $0.04，回复约 $0.02
 
 ## 📋 合约信息
 
@@ -84,6 +89,17 @@ contract ChainTalk {
 - **Studio 查询**: 前端固定读取 `mainnet-v1`，未发布到 Graph Network
   - 查询地址：https://api.studio.thegraph.com/query/1723159/chain-talk/mainnet-v1
   - 部署 ID：`QmdUtYJJhaMDRjdA8pJ3ZhKe32LtT21kVJYyi94EusrbVF`
+
+## 💰 使用成本
+
+所有交易由发帖人支付 Gas 费，合约本身不收取任何费用：
+
+| 操作 | Gas Used | 预估费用（低 gas 时） |
+|---|---|---|
+| 发主题 | ~80,000 | ~$0.04 |
+| 发回复 | ~33,000 | ~$0.02 |
+
+费用随以太坊 gas price 波动，当前主网 gas price 较低时成本如上。
 
 ## 🚀 快速开始
 
