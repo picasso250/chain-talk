@@ -183,11 +183,11 @@
       </h1>
 
       <div class="flex items-center justify-between sm:justify-end gap-3">
-        <!-- Arbitrum Network Badge -->
+        <!-- Sepolia Network Badge -->
         <div
-          class="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-medium text-blue-700"
+          class="flex items-center gap-1 px-2 py-1 bg-purple-50 border border-purple-200 rounded-full text-xs font-medium text-purple-700"
         >
-          <!-- Arbitrum Logo SVG -->
+          <!-- Ethereum Logo SVG -->
           <svg
             width="12"
             height="12"
@@ -195,16 +195,10 @@
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <circle cx="12" cy="12" r="10" fill="#28A0F0" />
-            <path
-              d="M8 12L11 15L16 9"
-              stroke="white"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
+            <path d="M12 2L6 12L12 15.5L18 12L12 2Z" fill="#627EEA" />
+            <path d="M6 13.5L12 17L18 13.5L12 22L6 13.5Z" fill="#627EEA" opacity="0.7" />
           </svg>
-          Arbitrum
+          Sepolia
         </div>
 
         <div class="relative" bind:this={walletPickerElement}>
@@ -383,14 +377,14 @@
                     >{topic.timestamp}</span
                   >
                   <a
-                    href="https://arbiscan.io/address/{topic.author}"
+                    href="https://sepolia.etherscan.io/address/{topic.author}"
                     target="_blank"
                     class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300"
                   >
                     {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
                   </a>
                   <a
-                    href="https://arbiscan.io/tx/{topic.transactionHash}"
+                    href="https://sepolia.etherscan.io/tx/{topic.transactionHash}"
                     target="_blank"
                     class="hover:text-gray-700 hover:underline decoration-gray-300"
                     onclick={(e) => e.stopPropagation()}

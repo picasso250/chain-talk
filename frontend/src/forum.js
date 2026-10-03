@@ -1,6 +1,10 @@
-import { BrowserProvider, Contract } from "ethers";
+import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants.js";
 import { ensureNetwork } from "./wallet.js";
+
+// Sepolia testnet RPC for reading events directly (no The Graph needed during testing)
+const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
+const DEPLOY_BLOCK = 11834966;
 
 export async function postMessage(provider, content, replyTo = "0") {
   await ensureNetwork(provider);
@@ -10,34 +14,18 @@ export async function postMessage(provider, content, replyTo = "0") {
   return confirmedEvent(await tx.wait(), contract.interface);
 }
 
-const endpoint = "https://api.studio.thegraph.com/query/1723159/chain-talk/version/latest";
-
 export async function loadPosts() {
-  const posts = [];
-  let after = "";
-  // Cursor follows the indexer's ID ordering, independently of numeric post order.
-  while (true) {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `query($after: ID!) {
-          posts(first: 1000, orderBy: id, orderDirection: asc, where: {id_gt: $after}) {
-            id replyTo author content timestamp transactionHash
-          }
-        }`, variables: { after },
-      }),
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const result = await response.json();
-    if (result.errors?.length || !Array.isArray(result.data?.posts)) throw new Error("Invalid discussion response");
-    const page = result.data.posts;
-    posts.push(...page);
-    if (page.length < 1000) return posts;
-    const cursor = page.at(-1).id;
-    if (cursor === after) throw new Error("Discussion pagination stalled");
-    after = cursor;
-  }
+  const provider = new JsonRpcProvider(RPC_URL);
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  const events = await contract.queryFilter("Posted", DEPLOY_BLOCK, "latest");
+  return events.map(e => ({
+    id: e.args.id.toString(),
+    replyTo: e.args.replyTo.toString(),
+    author: e.args.author,
+    content: e.args.content,
+    timestamp: e.args.timestamp.toString(),
+    transactionHash: e.transactionHash,
+  }));
 }
 
 export function mergePosts(indexed, current) {

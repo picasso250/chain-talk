@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2",
-    "ethers": "^6.17.0"
+    "ethers": "^6.17.0",
+    "undici": "^8.11.2"
   }
 }
