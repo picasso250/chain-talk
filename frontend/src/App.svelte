@@ -19,6 +19,15 @@
     });
   }
 
+  // Measure after Svelte has applied the bound value, including programmatic changes.
+  function autoResize(textarea) {
+    $effect(() => {
+      topicContent;
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(Math.max(textarea.scrollHeight, 96), 256) + "px";
+    });
+  }
+
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
   let walletProvider = $state.raw(null);
@@ -288,14 +297,11 @@
           {:else}
             <!-- Edit Mode -->
             <textarea
+              use:autoResize
               bind:value={topicContent}
               placeholder="Start a conversation. First line becomes the title..."
               class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
-              style="height: auto; min-height: 96px; max-height: 256px;"
-              oninput={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 96), 256) + 'px';
-              }}
+              style="min-height: 96px; max-height: 256px;"
             ></textarea>
           {/if}
           <div

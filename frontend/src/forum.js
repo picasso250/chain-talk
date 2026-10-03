@@ -2,9 +2,11 @@ import { BrowserProvider, Contract } from "ethers";
 import { CONTRACT_ABI, CONTRACT_ADDRESS, SUBGRAPH_URL } from "./constants.js";
 
 export async function postMessage(provider, content, replyTo = "0") {
+  // Normalize line endings to LF to save calldata (CRLF would waste 1 byte per newline)
+  const normalizedContent = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   const signer = await new BrowserProvider(provider).getSigner();
   const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-  const tx = await contract.post(content, replyTo);
+  const tx = await contract.post(normalizedContent, replyTo);
   const receipt = await tx.wait();
   return confirmedEvent(receipt, contract.interface, signer.provider);
 }
