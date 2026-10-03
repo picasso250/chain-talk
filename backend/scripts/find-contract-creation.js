@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const { ethers } = require("ethers");
 
 async function main() {
     console.log("🔍 查找合约创建区块高度...");

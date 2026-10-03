@@ -4,16 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "hardhat test"
+    "build": "node compile.js",
+    "test": "npm run build && node --test test/*.cjs",
+    "deploy": "node deploy.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
-    "hardhat": "^2.28.2"
+    "@foundry-rs/anvil-win32-amd64": "1.7.1",
+    "solc": "0.8.37"
   },
   "dependencies": {
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.4.2",
+    "ethers": "^6.17.0"
   }
 }

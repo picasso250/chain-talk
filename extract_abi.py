@@ -2,7 +2,7 @@ import json
 import os
 
 # Read the ChainTalk.json file
-with open("backend/artifacts/contracts/ChainTalk.sol/ChainTalk.json", "r") as f:
+with open("backend/artifacts/ChainTalk.json", "r") as f:
     contract_data = json.load(f)
 
 # Extract the ABI

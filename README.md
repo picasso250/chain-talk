@@ -29,8 +29,8 @@
 - **构建工具**: Vite 7 - 极速前端构建工具
 
 ### Backend
-- **智能合约**: Solidity 0.8.30 - 最新的 Solidity 版本
-- **开发框架**: Hardhat - 专业以太坊开发环境
+- **智能合约**: Solidity 0.8.37 - 最新的 Solidity 版本
+- **工具链**: solc 0.8.37 编译、ethers 部署、Node 测试 + Anvil 本地 EVM
 - **部署模式**: 普通合约直接部署，无管理员权限
 - **部署网络**: Arbitrum One 主网
 
@@ -124,7 +124,7 @@ chain-talk/
 
 源码已改为普通合约，但尚未部署。当前前端及子图地址仍指向旧版代理，不代表线上已不可升级。
 
-1. 在 backend 运行 npm test；先使用 scripts/deploy-sepolia.js 验证，再通过 scripts/deploy-arbitrum.js 部署新合约。两个脚本均直接部署，无初始化参数。
+1. 在 backend 运行 npm test；使用 deploy.js，通过 RPC_URL、PRIVATE_KEY、CHAIN_ID 明确指定网络。先在测试网验证，再部署正式网络。脚本直接部署，无初始化参数。
 2. 记录新地址和部署区块，并验证合约源码。不要把此合约作为旧代理的升级实现，存储布局已改变。
 3. 更新 frontend/src/constants.js 的合约地址；更新 chain-talk-subgraph/subgraph.yaml 与 networks.json 的地址和起始区块。新合约计数从零开始，必须部署独立的新子图，不复用旧索引数据。
 4. 子图构建、部署并同步完成后，更新 frontend/src/forum.js 的查询端点，最后发布前端。
@@ -143,17 +143,24 @@ chain-talk/
 
 ### 合约开发
 
+编译器固定为 solc 0.8.37，EVM 目标为 paris，优化器 200 runs。测试使用同一编译产物，自动启动隔离的 Anvil 节点并在结束后关闭，不需要公网或真实私钥。目前测试依赖为 Windows x64 官方 Anvil 二进制包；其他平台需安装对应 Anvil 并通过 ANVIL_BIN 指定路径。
+
+部署默认仅估算，明确添加 --broadcast 才发送。脚本检查 RPC 实际 chain ID，每次重新编译，部署记录保存为 deploy-链ID-地址.json。网络迁移与合约行为调整另行进行。
+
 ```bash
 cd backend
 
 # 编译合约
-npx hardhat compile
+npm run build
 
 # 运行测试
-npx hardhat test
+npm test
 
-# 部署到本地网络
-npx hardhat run scripts/deploy-local.js --network localhost
+# 预估部署，须先设置 RPC_URL、PRIVATE_KEY、CHAIN_ID
+npm run deploy
+
+# 明确广播部署交易
+npm run deploy -- --broadcast
 ```
 
 ## 🤝 贡献指南
@@ -179,7 +186,7 @@ npx hardhat run scripts/deploy-local.js --network localhost
 
 ## 🌟 技术亮点
 
-- **技术栈**: Svelte 5 Runes、Solidity 0.8.30，普通合约直接部署
+- **技术栈**: Svelte 5 Runes、Solidity 0.8.37，普通合约直接部署
 - **用户体验优化**: 零门槛只读访问，降低 Web3 使用门槛
 - **生产就绪**: 已在 Arbitrum 主网部署，经过充分测试
 - **固定规则**: 新版不保留升级或管理员后门，修改规则需要部署新地址

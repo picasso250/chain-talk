@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.30;
+pragma solidity 0.8.37;
 
 
 /**
@@ -12,8 +12,6 @@ pragma solidity 0.8.30;
 contract ChainTalk {
     // 主题ID计数器
     uint256 private _topicIdCounter;
-    
-    mapping(uint256 => uint256) private _replyCounts; // 每个主题的回复数量
     uint256 private _replyIdCounter; // 全局回复ID计数器
     
     // 主题创建事件
@@ -53,7 +51,6 @@ contract ChainTalk {
         require(_topicId > 0 && _topicId <= _topicIdCounter, "Topic does not exist");
         require(bytes(_content).length > 0, "Content cannot be empty");
         _replyIdCounter++;
-        _replyCounts[_topicId]++;
         emit ReplyCreated(_replyIdCounter, _topicId, msg.sender, block.timestamp, _content);
     }
 
@@ -62,14 +59,6 @@ contract ChainTalk {
      */
     function getTopicIdCounter() public view returns (uint256) {
         return _topicIdCounter;
-    }
-
-    /**
-     * @dev 获取指定主题的回复数量
-     * @param _topicId 主题ID
-     */
-    function getReplyCount(uint256 _topicId) public view returns (uint256) {
-        return _replyCounts[_topicId];
     }
 
     /**
