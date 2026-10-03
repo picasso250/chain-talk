@@ -12,7 +12,8 @@ export async function postMessage(provider, content, replyTo = "0") {
   const signer = await new BrowserProvider(provider).getSigner();
   const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
   const tx = await contract.post(content, replyTo);
-  return confirmedEvent(await tx.wait(), contract.interface);
+  const receipt = await tx.wait();
+  return confirmedEvent(receipt, contract.interface, signer.provider);
 }
 
 export async function loadPosts() {
@@ -21,16 +22,21 @@ export async function loadPosts() {
     const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
     const latest = await provider.getBlockNumber();
     const posts = [];
+    const blockCache = new Map();
     for (let from = DEPLOY_BLOCK; from <= latest; from += BLOCK_CHUNK) {
       const to = Math.min(from + BLOCK_CHUNK - 1, latest);
       const events = await contract.queryFilter("Posted", from, to);
       for (const e of events) {
+        if (!blockCache.has(e.blockNumber)) {
+          const block = await provider.getBlock(e.blockNumber);
+          blockCache.set(e.blockNumber, block?.timestamp ?? 0);
+        }
         posts.push({
           id: e.args.id.toString(),
           replyTo: e.args.replyTo.toString(),
           author: e.args.author,
           content: e.args.content,
-          timestamp: e.args.timestamp.toString(),
+          timestamp: blockCache.get(e.blockNumber).toString(),
           transactionHash: e.transactionHash,
         });
       }
@@ -69,15 +75,17 @@ export function discussionTopics(posts) {
   return topics.reverse();
 }
 
-export function confirmedEvent(receipt, contractInterface) {
+export async function confirmedEvent(receipt, contractInterface, provider) {
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) continue;
     const event = contractInterface.parseLog(log);
     if (event?.name !== "Posted") continue;
     const { args } = event;
+    const block = await provider.getBlock(receipt.blockNumber);
     return {
       id: args.id.toString(), replyTo: args.replyTo.toString(),
-      author: args.author, content: args.content, timestamp: args.timestamp.toString(),
+      author: args.author, content: args.content,
+      timestamp: (block?.timestamp ?? 0).toString(),
       transactionHash: receipt.hash, confirmedLocally: true,
     };
   }

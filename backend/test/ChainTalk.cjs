@@ -68,9 +68,8 @@ test('topics and nested replies share sequential IDs and preserve parent links',
   for (const parent of [0n,1n,2n,0n,3n]) {
     const receipt = await (await f.post('你好',parent)).wait();
     const event = f.interface.parseLog(receipt.logs[0]);
-    const block = await provider.getBlock(receipt.blockNumber);
     assert.equal(event.name,'Posted');
-    assert.deepEqual([...event.args], [++id,parent,author.address,BigInt(block.timestamp),'你好']);
+    assert.deepEqual([...event.args], [++id,parent,author.address,'你好']);
   }
 });
 

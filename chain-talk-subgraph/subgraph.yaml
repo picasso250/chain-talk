@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ChainTalk
-    network: arbitrum-one
+    network: sepolia
     source:
-      address: "0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380"
+      address: "0xec3639B4CC756d39e996447dE1787B09EF646b6F"
       abi: ChainTalk
-      startBlock: 419912164
+      startBlock: 11834966
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -21,6 +21,6 @@ dataSources:
         - name: ChainTalk
           file: ./abis/ChainTalk.json
       eventHandlers:
-        - event: Posted(indexed uint256,indexed uint256,indexed address,uint256,string)
+        - event: Posted(indexed uint256,indexed uint256,indexed address,string)
           handler: handlePosted
       file: ./src/chain-talk.ts

@@ -6,7 +6,7 @@ export function handlePosted(event: Posted): void {
   post.replyTo = event.params.replyTo
   post.author = event.params.author
   post.content = event.params.content
-  post.timestamp = event.params.timestamp
+  post.timestamp = event.block.timestamp
   post.transactionHash = event.transaction.hash
   post.save()
 }

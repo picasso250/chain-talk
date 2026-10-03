@@ -9,7 +9,6 @@ contract ChainTalk {
         uint256 indexed id,
         uint256 indexed replyTo,
         address indexed author,
-        uint256 timestamp,
         string content
     );
 
@@ -17,6 +16,6 @@ contract ChainTalk {
         require(bytes(content).length > 0, "Content cannot be empty");
         require(replyTo <= _postIdCounter, "Post does not exist");
         _postIdCounter++;
-        emit Posted(_postIdCounter, replyTo, msg.sender, block.timestamp, content);
+        emit Posted(_postIdCounter, replyTo, msg.sender, content);
     }
 }
