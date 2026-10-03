@@ -1,19 +1,16 @@
 import { assert, test, clearStore } from "matchstick-as/assembly/index"
-import { Address, BigInt } from "@graphprotocol/graph-ts"
-import { handleTopicCreated, handleReplyCreated } from "../src/chain-talk"
-import { createTopicCreatedEvent, createReplyCreatedEvent } from "./chain-talk-utils"
+import { handlePosted } from "../src/chain-talk"
+import { createPostedEvent } from "./chain-talk-utils"
 
-test("Indexes topics and replies with their real transaction hashes", () => {
+test("Indexes roots and nested replies with real transaction hashes", () => {
   clearStore()
-  let author = Address.fromString("0x0000000000000000000000000000000000000001")
-  let topic = createTopicCreatedEvent(BigInt.fromI32(1), author, BigInt.fromI32(10), "Topic")
-  handleTopicCreated(topic)
-  let reply = createReplyCreatedEvent(BigInt.fromI32(1), BigInt.fromI32(1), author, BigInt.fromI32(11), "Reply")
-  handleReplyCreated(reply)
-  assert.entityCount("Topic", 1)
-  assert.entityCount("Reply", 1)
-  assert.fieldEquals("Topic", "1", "transactionHash", topic.transaction.hash.toHexString())
-  assert.fieldEquals("Reply", "1", "transactionHash", reply.transaction.hash.toHexString())
-  assert.fieldEquals("Reply", "1", "topic", "1")
+  let root = createPostedEvent(1, 0)
+  handlePosted(root)
+  handlePosted(createPostedEvent(2, 1))
+  handlePosted(createPostedEvent(3, 2))
+  assert.entityCount("Post", 3)
+  assert.fieldEquals("Post", "1", "replyTo", "0")
+  assert.fieldEquals("Post", "3", "replyTo", "2")
+  assert.fieldEquals("Post", "1", "transactionHash", root.transaction.hash.toHexString())
   clearStore()
 })

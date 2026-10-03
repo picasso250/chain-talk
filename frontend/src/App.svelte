@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
-  import { loadTopics, postTopic, mergeTopics } from "./forum.js";
+  import { loadPosts, postMessage, mergePosts, discussionTopics } from "./forum.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
@@ -15,7 +15,8 @@
 
   let account = $state(null);
   let topicContent = $state("");
-  let topics = $state([]);
+  let posts = $state([]);
+  let topics = $derived(discussionTopics(posts));
   let expandedTopics = $state(new Set());
   let loadingTopics = $state(false);
   let posting = $state(false);
@@ -96,8 +97,8 @@
 
     posting = true;
     try {
-      const topic = await postTopic(walletProvider, topicContent);
-      topics = [topic, ...topics.filter(item => item.id !== topic.id)];
+      const topic = await postMessage(walletProvider, topicContent);
+      posts = [topic, ...posts.filter(item => item.id !== topic.id)];
 
       topicContent = "";
       void fetchTopics();
@@ -131,8 +132,8 @@
     loadingTopics = true;
     loadError = "";
     try {
-      const indexedTopics = await loadTopics();
-      topics = mergeTopics(indexedTopics, topics);
+      const indexedPosts = await loadPosts();
+      posts = mergePosts(indexedPosts, posts);
     } catch (error) {
       console.error("Fetch topics failed:", error);
       loadError = "Unable to load discussions. Please retry.";
@@ -142,9 +143,7 @@
   }
 
   function onReplyCreated(reply) {
-    topics = topics.map(topic => topic.id === reply.topicId
-      ? { ...topic, replies: [...topic.replies.filter(item => item.id !== reply.id), reply] }
-      : topic);
+    posts = [reply, ...posts.filter(item => item.id !== reply.id)];
     void fetchTopics();
   }
 

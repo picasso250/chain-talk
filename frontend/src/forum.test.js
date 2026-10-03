@@ -1,40 +1,43 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Interface } from 'ethers';
-import { loadTopics, confirmedEvent, mergeTopics } from './forum.js';
+import { loadPosts, confirmedEvent, mergePosts, discussionTopics } from './forum.js';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from './constants.js';
-const topic = { id: '1', timestamp: '10', replies: [], transactionHash: '0xabc' };
-test('confirmed topic survives stale indexing, then deduplicates', () => {
-  const local = { ...topic, confirmedLocally: true };
-  assert.deepEqual(mergeTopics([], [local]), [local]);
-  assert.deepEqual(mergeTopics([topic], [local]), [topic]);
+const post = (id, replyTo = '0') => ({ id, replyTo, timestamp: '10', content: 'hello' });
+test('nested replies stay under their root, with no number precision loss', () => {
+  const data = [post('9007199254740994','9007199254740993'),post('2','1'),post('1'),post('9007199254740993','2'),post('3')];
+  const topics = discussionTopics(data);
+  assert.deepEqual(topics.map(t => t.id), ['3','1']);
+  assert.deepEqual(topics[1].replies.map(r => r.id), ['2','9007199254740993','9007199254740994']);
+  assert.equal(data[0].id,'9007199254740994');
 });
-test('confirmed reply survives stale indexing and merges once', () => {
-  const reply = { id: '2', timestamp: '11', confirmedLocally: true };
-  const local = { ...topic, replies: [reply] };
-  assert.equal(mergeTopics([topic], [local])[0].replies.length, 1);
-  const indexed = { ...topic, replies: [{ id: '2', timestamp: '11' }] };
-  assert.deepEqual(mergeTopics([indexed], [local]), [indexed]);
+test('confirmed nested replies survive stale indexing and deduplicate', () => {
+  const local = { ...post('3','2'), confirmedLocally:true };
+  const current = [post('1'),post('2','1'),local];
+  assert.equal(mergePosts(current.slice(0,2),current).length,3);
+  const indexed = current.map(({confirmedLocally,...p}) => p);
+  assert.deepEqual(mergePosts(indexed,current),indexed);
 });
-test('receipts provide real IDs, content and transaction hash for both events', () => {
+test('receipt preserves parent, author, content and hash', () => {
   const iface = new Interface(CONTRACT_ABI);
-  const author = '0x0000000000000000000000000000000000000001';
-  for (const [name, values] of [['TopicCreated', [3n, author, 42n, 'hello']], ['ReplyCreated', [4n, 3n, author, 43n, 'reply']]]) {
-    const log = iface.encodeEventLog(iface.getEvent(name), values);
-    const record = confirmedEvent({ hash: '0xrealhash', logs: [{ ...log, address: CONTRACT_ADDRESS }] }, iface, name);
-    assert.equal(record.transactionHash, '0xrealhash');
-    assert.equal(record.id, name === 'TopicCreated' ? '3' : '4');
-    assert.equal(record.content, name === 'TopicCreated' ? 'hello' : 'reply');
-  }
+  const author='0x0000000000000000000000000000000000000001';
+  const log=iface.encodeEventLog(iface.getEvent('Posted'),[3n,2n,author,42n,'nested']);
+  const record=confirmedEvent({hash:'0xreal',logs:[{...log,address:CONTRACT_ADDRESS}]},iface);
+  assert.deepEqual(record,{id:'3',replyTo:'2',author,timestamp:'42',content:'nested',transactionHash:'0xreal',confirmedLocally:true});
 });
-test('HTTP and GraphQL failures reject instead of returning empty topics', async () => {
-  const original = globalThis.fetch;
+test('query errors reject; pagination includes all posts', async () => {
+  const original=globalThis.fetch;
   try {
-    globalThis.fetch = async () => ({ ok: false, status: 503 });
-    await assert.rejects(loadTopics(), /HTTP 503/);
-    globalThis.fetch = async () => ({ ok: true, json: async () => ({ errors: [{ message: 'index unavailable' }], data: { topics: [] } }) });
-    await assert.rejects(loadTopics(), /Invalid/);
-    globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: { topics: [] } }) });
-    assert.deepEqual(await loadTopics(), []);
-  } finally { globalThis.fetch = original; }
+    globalThis.fetch=async()=>({ok:false,status:503});
+    await assert.rejects(loadPosts(),/HTTP 503/);
+    globalThis.fetch=async()=>({ok:true,json:async()=>({errors:[{message:'bad'}]})});
+    await assert.rejects(loadPosts(),/Invalid/);
+    let calls=0;
+    globalThis.fetch=async(url,options)=> {
+      const after=JSON.parse(options.body).variables.after;
+      assert.equal(after,calls===0?'':'999');
+      return {ok:true,json:async()=>({data:{posts:calls++===0?Array.from({length:1000},(_,i)=>post(String(i))):[post('last')]}})};
+    };
+    assert.equal((await loadPosts()).length,1001);
+  } finally {globalThis.fetch=original;}
 });

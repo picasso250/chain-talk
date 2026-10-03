@@ -1,20 +1,22 @@
 <script>
-  import { postReply } from "./forum.js";
+  import { postMessage } from "./forum.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
   let replyContent = $state("");
   let submitting = $state(false);
+  let replyTarget = $state(null);
   // 提交回复
   async function submitReply() {
     if (submitting || !replyContent.trim()) return;
     
     submitting = true;
     try {
-      const reply = await postReply(walletProvider, topicId, replyContent);
+      const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId);
       onReplyCreated(reply);
       replyContent = "";
+      replyTarget = null;
     } catch (error) {
       console.error("Create reply failed:", error);
       alert("Failed to create reply. See console for details.");
@@ -42,7 +44,7 @@
     {/if}
 
     {#each replies as reply (reply.id)}
-        <div class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
+        <div id={`post-${reply.id}`} class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{reply.timestamp}</span>
           <a href={`https://arbiscan.io/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
@@ -57,7 +59,11 @@
           </a>
         </div>
         <div class="prose prose-sm max-w-none">
+          <div class="text-xs text-gray-500 mb-2">
+            #{reply.id} · {#if reply.replyTo === topicId}Reply to topic{:else}<a class="underline" href={`#post-${reply.replyTo}`}>Reply to #{reply.replyTo}</a>{/if}
+          </div>
           <MarkdownRenderer content={reply.content} />
+          {#if account}<button class="text-sm text-green-700 mt-2" disabled={submitting} onclick={() => replyTarget = reply.id}>Reply to #{reply.id}</button>{/if}
         </div>
       </div>
     {/each}
@@ -69,6 +75,11 @@
       <div class="relative group mt-2">
         <div class="absolute -inset-0.5 bg-gradient-to-r from-gray-200 to-gray-300 rounded opacity-30 group-hover:opacity-50 transition duration-300 blur"></div>
         <div class="relative bg-white p-4 rounded border border-gray-300 shadow-sm">
+          {#if replyTarget}
+            <div class="text-sm mb-2">Replying to #{replyTarget}
+              <button class="underline ml-2" disabled={submitting} onclick={() => replyTarget = null}>Cancel</button>
+            </div>
+          {/if}
           <textarea
             bind:value={replyContent}
             placeholder="Write a reply..."

@@ -16,14 +16,11 @@ dataSources:
       apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
-        - ReplyCreated
-        - TopicCreated
+        - Post
       abis:
         - name: ChainTalk
           file: ./abis/ChainTalk.json
       eventHandlers:
-        - event: ReplyCreated(indexed uint256,indexed uint256,indexed address,uint256,string)
-          handler: handleReplyCreated
-        - event: TopicCreated(indexed uint256,indexed address,uint256,string)
-          handler: handleTopicCreated
+        - event: Posted(indexed uint256,indexed uint256,indexed address,uint256,string)
+          handler: handlePosted
       file: ./src/chain-talk.ts

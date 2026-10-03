@@ -135,9 +135,11 @@ chain-talk/
 
 ### 讨论数据与交易链接
 
-主题和回复由一次 GraphQL 查询读取。交易确认后，前端从回执事件直接展示新内容；索引尚未返回这些记录时保留本地已确认内容，按实体 ID 去重。该临时状态仅保存在当前页面，刷新页面后依赖子图的同步进度。
+合约只有一个计数器、`post(content, replyTo)` 函数和 `Posted` 事件。`replyTo = 0` 创建主题，其他值必须指向已存在的帖子，因此支持回复的回复，且不允许自引用或循环。
 
-子图的 Topic 和 Reply 均要求 `transactionHash` 字段。发布此版本时，必须先部署新子图并等待历史事件同步、确认查询包含真实交易哈希，再发布前端；不兼容旧 schema。
+主题和回复统一保存为 Post，前端按 ID 游标分页读取，按父 ID 归入对应主题。回复区按发表顺序显示，并提供父帖子链接和逐条回复按钮。交易确认后立即展示回执内容；索引追上前保留本地已确认内容，按 ID 去重。该临时状态仅保存在当前页面，刷新页面后依赖子图的同步进度。
+
+子图只索引 Posted 事件，Post 包含 replyTo 和 transactionHash。必须为新合约部署新子图并同步，再发布前端；不兼容旧合约 ABI、Topic/Reply schema，也不要求维持 Netlify 旧站可用。
 
 前端数据逻辑测试：在 `frontend` 目录运行 `node --test src/forum.test.js`，构建运行 `npm run build`。子图验证依次运行 `npm run codegen` 和 `npm run build`。
 

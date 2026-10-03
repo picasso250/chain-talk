@@ -31,11 +31,11 @@ async function deploy() {
 }
 test('empty topics revert without consuming IDs', async () => {
   const f = await deploy();
-  await assert.rejects(f.createTopic.staticCall(''), /Content cannot be empty/);
-  await assert.rejects(async () => { await (await f.createTopic('', { gasLimit: 100000 })).wait(); }, error => error.code === 'CALL_EXCEPTION');
-  const receipt = await (await f.createTopic('First')).wait();
+  await assert.rejects(f.post.staticCall('',0), /Content cannot be empty/);
+  await assert.rejects(async () => { await (await f.post('',0, { gasLimit: 100000 })).wait(); }, error => error.code === 'CALL_EXCEPTION');
+  const receipt = await (await f.post('First',0)).wait();
   const event = f.interface.parseLog(receipt.logs[0]);
-  assert.equal(event.args.topicId, 1n);
+  assert.equal(event.args.id, 1n);
 });
 test('no initialization, ownership or upgrade entry points', async () => {
   const f = await deploy();
@@ -45,30 +45,32 @@ test('no initialization, ownership or upgrade entry points', async () => {
     await assert.rejects(provider.call({ to: await f.getAddress(), data: admin.encodeFunctionData(name,args) }), error => error.code === 'CALL_EXCEPTION');
   }
 });
-test('zero and future topics reject replies', async () => {
+test('future and self references revert without consuming IDs', async () => {
   const f = await deploy();
-  await assert.rejects(f.createReply.staticCall(1,'Reply'), /Topic does not exist/);
-  await (await f.createTopic('First')).wait();
-  for (const id of [0n,2n,ethers.MaxUint256]) {
-    await assert.rejects(f.createReply.staticCall(id,'Reply'), /Topic does not exist/);
+  await assert.rejects(f.post.staticCall('Reply',1), /Post does not exist/);
+  await (await f.post('First',0)).wait();
+  for (const id of [2n,ethers.MaxUint256]) {
+    await assert.rejects(f.post.staticCall('Reply',id), /Post does not exist/);
   }
+  await assert.rejects(async () => { await (await f.post('Bad',2,{gasLimit:100000})).wait(); }, e => e.code === 'CALL_EXCEPTION');
+  const receipt = await (await f.post('Valid',1)).wait();
+  assert.equal(f.interface.parseLog(receipt.logs[0]).args.id,2n);
 });
-test('empty replies revert', async () => {
+test('empty nested replies revert', async () => {
   const f = await deploy();
-  await (await f.createTopic('First')).wait();
-  await assert.rejects(f.createReply.staticCall(1,''), /Content cannot be empty/);
+  await (await f.post('First',0)).wait();
+  await (await f.post('Reply',1)).wait();
+  await assert.rejects(f.post.staticCall('',2), /Content cannot be empty/);
 });
-test('valid replies emit content with sequential IDs', async () => {
+test('topics and nested replies share sequential IDs and preserve parent links', async () => {
   const f = await deploy();
-  await (await f.createTopic('First')).wait();
-  await (await f.createTopic('Second')).wait();
   let id = 0n;
-  for (const topic of [1n,2n,1n]) {
-    const receipt = await (await f.createReply(topic,'你好\n**Reply**')).wait();
+  for (const parent of [0n,1n,2n,0n,3n]) {
+    const receipt = await (await f.post('你好',parent)).wait();
     const event = f.interface.parseLog(receipt.logs[0]);
     const block = await provider.getBlock(receipt.blockNumber);
-    assert.equal(event.name,'ReplyCreated');
-    assert.deepEqual([...event.args], [++id,topic,author.address,BigInt(block.timestamp),'你好\n**Reply**']);
+    assert.equal(event.name,'Posted');
+    assert.deepEqual([...event.args], [++id,parent,author.address,BigInt(block.timestamp),'你好']);
   }
 });
 
