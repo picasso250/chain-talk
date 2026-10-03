@@ -3,23 +3,27 @@
   import { slide } from "svelte/transition";
   import { ethers } from "ethers";
   import { CONTRACT_ADDRESS, CONTRACT_ABI, TARGET_CHAIN_ID } from "./constants";
+  import { loadTopics, confirmedEvent, mergeTopics } from "./forum.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
 
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
-  let selectedWalletInfo = $state(null);
+  let walletProvider = $state.raw(null);
+  let showWalletPicker = $state(false);
+  let walletPickerElement;
+  let removeWalletListeners = () => {};
 
 let account = $state(null);
 let topicContent = $state("");
 let topics = $state([]);
-let allReplies = $state([]); // 预加载所有回复
 let expandedTopics = $state(new Set());
-let loading = $state(false);
+let loadingTopics = $state(false);
+let posting = $state(false);
+let loadError = $state("");
 let isConnecting = $state(false);
 let isPreviewMode = $state(false);
-let hasWallet = $state(!!window.ethereum);
 
   // EIP-6963 钱包检测
   function setupEIP6963() {
@@ -33,11 +37,6 @@ let hasWallet = $state(!!window.ethereum);
         console.log('🎯 发现新钱包:', info.name, info.rdns);
         detectedWallets = [...providers];
         
-        // 检查是否是当前选中的钱包
-        if (window.ethereum === provider) {
-          selectedWalletInfo = info;
-          console.log('✅ 当前选择的钱包:', info.name, info.rdns);
-        }
       }
     };
 
@@ -54,12 +53,12 @@ let hasWallet = $state(!!window.ethereum);
   }
 
   // 检查并切换网络
-  async function checkNetwork() {
-    if (!window.ethereum) return;
-    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+  async function checkNetwork(provider = walletProvider || window.ethereum) {
+    if (!provider?.request) return false;
+    const chainId = await provider.request({ method: "eth_chainId" });
     if (chainId !== TARGET_CHAIN_ID) {
       try {
-        await window.ethereum.request({
+        await provider.request({
           method: "wallet_switchEthereumChain",
           params: [{ chainId: TARGET_CHAIN_ID }],
         });
@@ -73,40 +72,97 @@ let hasWallet = $state(!!window.ethereum);
     return true;
   }
 
-  // 连接钱包
-  async function connectWallet() {
-    if (!window.ethereum) {
-      alert("Please install MetaMask!");
-      return;
-    }
+  // 用指定 provider 连接
+  async function connectWithProvider(provider) {
+    if (isConnecting) return;
     isConnecting = true;
     try {
-      const isCorrectNetwork = await checkNetwork();
+      const isCorrectNetwork = await checkNetwork(provider);
       if (!isCorrectNetwork) return;
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      await provider.request({ method: "eth_requestAccounts" });
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      const signer = await ethersProvider.getSigner();
       account = await signer.getAddress();
+      removeWalletListeners();
+      walletProvider = provider;
+      const onAccountsChanged = (accounts) => {
+        if (walletProvider !== provider) return;
+        if (accounts.length === 0) disconnectWallet();
+        else account = accounts[0];
+      };
+      const onDisconnect = () => {
+        if (walletProvider === provider) disconnectWallet();
+      };
+      provider.on("accountsChanged", onAccountsChanged);
+      provider.on("disconnect", onDisconnect);
+      removeWalletListeners = () => {
+        provider.removeListener("accountsChanged", onAccountsChanged);
+        provider.removeListener("disconnect", onDisconnect);
+      };
+      showWalletPicker = false;
 
-      await fetchTopics();
+
     } catch (error) {
       console.error("Connection failed:", error);
+      alert(error.message || "Connection failed.");
     } finally {
       isConnecting = false;
     }
   }
 
+  // 连接钱包
+  async function connectWallet() {
+    // 已连接时不做任何事
+    if (account || isConnecting) return;
+    // 如果检测到多个钱包，显示选择器
+    if (detectedWallets.length > 1) {
+      showWalletPicker = !showWalletPicker;
+      return;
+    }
+    if (detectedWallets.length === 1) {
+      await selectWallet(detectedWallets[0]);
+      return;
+    }
+    // 未收到钱包广播时使用默认 provider
+    if (window.ethereum) {
+      await connectWithProvider(window.ethereum);
+      return;
+    }
+    alert("No wallet detected. Please install MetaMask, Rabby, or any EIP-1193 compatible wallet.");
+  }
+
+  // 点击外部关闭钱包选择器
+  function closeWalletPicker(event) {
+    if (!walletPickerElement?.contains(event.target)) showWalletPicker = false;
+  }
+
+  // 从选择器中选择特定钱包
+  async function selectWallet(walletDetail) {
+    await connectWithProvider(walletDetail.provider);
+  }
+
+  // 断开钱包
+  function disconnectWallet() {
+    removeWalletListeners();
+    removeWalletListeners = () => {};
+    account = null;
+    walletProvider = null;
+  }
+
   // 创建主题
   async function createTopic() {
-    if (!topicContent.trim()) return;
+    if (posting || !topicContent.trim()) return;
     if (!account) {
       await connectWallet();
       if (!account) return;
     }
 
-    loading = true;
+    posting = true;
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const activeProvider = walletProvider || window.ethereum;
+      if (!activeProvider) throw new Error("Wallet not connected");
+      const provider = new ethers.BrowserProvider(activeProvider);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         CONTRACT_ADDRESS,
@@ -117,16 +173,18 @@ let hasWallet = $state(!!window.ethereum);
       const tx = await contract.createTopic(topicContent);
       console.log("Transaction sent:", tx.hash);
 
-      await tx.wait();
+      const receipt = await tx.wait();
+      const topic = confirmedEvent(receipt, contract.interface, "TopicCreated");
+      topics = [topic, ...topics.filter(item => item.id !== topic.id)];
 
       topicContent = "";
-      await fetchTopics();
-      await fetchAllReplies();
+      void fetchTopics();
+
     } catch (error) {
       console.error("Create topic failed:", error);
       alert("Failed to create topic. See console for details.");
     } finally {
-      loading = false;
+      posting = false;
     }
   }
 
@@ -146,136 +204,47 @@ let hasWallet = $state(!!window.ethereum);
     expandedTopics = new Set(expandedTopics);
   }
 
-  // 从The Graph获取所有回复数据
-  async function fetchAllReplies() {
-    try {
-      const endpoint = "https://api.studio.thegraph.com/query/1723159/chain-talk/version/latest";
-      const graphqlQuery = {
-        query: `
-          query {
-            topics(orderBy: timestamp, orderDirection: desc) {
-              id
-              replies(orderBy: timestamp, orderDirection: asc) {
-                id
-                author
-                content
-                timestamp
-              }
-            }
-          }
-        `
-      };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(graphqlQuery)
-      });
-
-      const data = await response.json();
-      
-      // 扁平化所有回复到一个数组
-      allReplies = [];
-      data.data.topics.forEach(topic => {
-        topic.replies.forEach(reply => {
-            allReplies.push({
-            replyId: parseInt(reply.id),
-            topicId: parseInt(topic.id),
-            author: reply.author,
-            timestamp: reply.timestamp,
-            content: reply.content,
-            transactionHash: reply.id
-          });
-        });
-      });
-
-    } catch (error) {
-      console.error("Fetch all replies failed:", error);
-      allReplies = [];
-    }
-  }
-
-  // 获取回复数量（从预加载的数据中计算）
-  function getReplyCount(topicId) {
-    return allReplies.filter(reply => reply.topicId === topicId).length;
-  }
-
-  // 获取特定主题的回复
-  function getRepliesForTopic(topicId) {
-    return allReplies.filter(reply => reply.topicId === topicId);
-  }
-
-  // 从The Graph获取主题数据
   async function fetchTopics() {
-    loading = true;
+    if (loadingTopics) return;
+    loadingTopics = true;
+    loadError = "";
     try {
-      const endpoint = "https://api.studio.thegraph.com/query/1723159/chain-talk/version/latest";
-      const graphqlQuery = {
-        query: `
-          query {
-            topics(orderBy: timestamp, orderDirection: desc) {
-              id
-              author
-              content
-              timestamp
-              replies(orderBy: timestamp, orderDirection: asc) {
-                id
-                author
-                content
-              }
-            }
-          }
-        `
-      };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(graphqlQuery)
-      });
-
-      const data = await response.json();
-      
-      // 转换数据格式以匹配现有结构
-      topics = data.data.topics.map((topic, index) => ({
-        topicId: parseInt(topic.id),
-        author: topic.author,
-        timestamp: topic.timestamp,
-        content: topic.content,
-        transactionHash: topic.id, // 使用id作为tx hash的替代
-        replyCount: topic.replies.length
-      }));
-
+      const indexedTopics = await loadTopics();
+      topics = mergeTopics(indexedTopics, topics);
     } catch (error) {
       console.error("Fetch topics failed:", error);
-      topics = [];
+      loadError = "Unable to load discussions. Please retry.";
     } finally {
-      loading = false;
+      loadingTopics = false;
     }
   }
 
-onMount(async () => {
+  function onReplyCreated(reply) {
+    topics = topics.map(topic => topic.id === reply.topicId
+      ? { ...topic, replies: [...topic.replies.filter(item => item.id !== reply.id), reply] }
+      : topic);
+    void fetchTopics();
+  }
+
+onMount(() => {
     // 设置EIP-6963钱包检测
     const cleanup = setupEIP6963();
     
     // 直接从The Graph获取数据，无需钱包
-    await fetchTopics();
-    await fetchAllReplies();
-    
-    if (window.ethereum) {
-      window.ethereum.on("accountsChanged", (accounts) => {
-        if (accounts.length > 0) {
-          account = accounts[0];
-        } else {
-          account = null;
-        }
-      });
-    }
+    void fetchTopics();
     
     // 清理事件监听器
-    return cleanup;
+    return () => {
+      cleanup();
+      removeWalletListeners();
+    };
   });
 </script>
+
+<svelte:window
+  onpointerdown={closeWalletPicker}
+  onkeydown={(event) => { if (event.key === "Escape") showWalletPicker = false; }}
+/>
 
 <main
   class="min-h-screen bg-gray-50 text-gray-800 font-sans selection:bg-green-100 selection:text-green-800 leading-relaxed"
@@ -317,17 +286,51 @@ onMount(async () => {
           Arbitrum
         </div>
 
-        <button
-          onclick={connectWallet}
-          class="text-sm px-3 py-1.5 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300 disabled:opacity-50"
-          disabled={isConnecting}
-        >
-          {#if account}
-            {account.slice(0, 6)}...{account.slice(-4)}
-          {:else}
-            {isConnecting ? "Connecting..." : "Connect Wallet"}
+        <div class="relative" bind:this={walletPickerElement}>
+          <button
+            onclick={connectWallet}
+            class="text-sm px-3 py-1.5 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300 disabled:opacity-50"
+            disabled={isConnecting}
+          >
+            {#if account}
+              {account.slice(0, 6)}...{account.slice(-4)}
+            {:else}
+              {isConnecting ? "Connecting..." : "Connect Wallet"}
+            {/if}
+          </button>
+
+          <!-- 钱包选择器下拉菜单 -->
+          {#if showWalletPicker && !account}
+            <div
+              class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden"
+            >
+              <div class="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
+                Select a wallet
+              </div>
+              {#each detectedWallets as w (w.info.uuid)}
+                <button
+                  onclick={() => selectWallet(w)}
+                  disabled={isConnecting}
+                  class="w-full px-3 py-2.5 text-left text-sm hover:bg-green-50 hover:text-green-700 transition-colors flex items-center gap-2"
+                >
+                  {#if w.info.icon}
+                    <img src={w.info.icon} alt="" class="w-5 h-5 rounded" />
+                  {/if}
+                  <span>{w.info.name}</span>
+                </button>
+              {/each}
+              {#if window.ethereum && !detectedWallets.some(w => w.provider === window.ethereum)}
+                <button
+                  onclick={() => connectWithProvider(window.ethereum)}
+                  disabled={isConnecting}
+                  class="w-full px-3 py-2.5 text-left text-sm hover:bg-green-50 hover:text-green-700 transition-colors border-t border-gray-100"
+                >
+                  Default Wallet (window.ethereum)
+                </button>
+              {/if}
+            </div>
           {/if}
-        </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -396,10 +399,10 @@ onMount(async () => {
             </span>
             <button
               onclick={createTopic}
-              disabled={loading || !topicContent.trim()}
+              disabled={posting || !topicContent.trim()}
               class="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Posting..." : "POST TOPIC"}
+              {posting ? "Posting..." : "POST TOPIC"}
             </button>
           </div>
         </div>
@@ -413,7 +416,12 @@ onMount(async () => {
         <div class="h-px bg-gray-200 flex-1"></div>
       </div>
 
-{#if loading}
+{#if loadError}
+        <div role="alert" class="text-center py-4 text-red-700">
+          {loadError}
+          <button onclick={fetchTopics} disabled={loadingTopics} class="underline ml-2">Retry</button>
+        </div>
+      {:else if loadingTopics}
         <div class="text-center py-12 text-gray-500 italic">
           Loading topics...
         </div>
@@ -423,7 +431,7 @@ onMount(async () => {
         </div>
       {/if}
 
-      {#each topics as topic (topic.transactionHash)}
+      {#each topics as topic (topic.id)}
         <article
           class="border border-gray-200 rounded-lg overflow-hidden hover:border-green-400 transition-colors duration-300 bg-white shadow-sm"
         >
@@ -431,8 +439,8 @@ onMount(async () => {
           <button
             type="button"
             class="w-full p-4 cursor-pointer hover:bg-gray-50 transition-colors text-left"
-            onclick={() => toggleTopic(topic.topicId)}
-            onkeydown={(e) => e.key === "Enter" && toggleTopic(topic.topicId)}
+            onclick={() => toggleTopic(topic.id)}
+            onkeydown={(e) => e.key === "Enter" && toggleTopic(topic.id)}
           >
             <div class="flex justify-between items-start">
               <div class="flex-1">
@@ -440,12 +448,12 @@ onMount(async () => {
                   <h3 class="text-base font-medium text-gray-800">
                     {getTitle(topic.content)}
                   </h3>
-                  {#if topic.replyCount > 0}
+                  {#if topic.replies.length > 0}
                     <span
                       class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded"
                     >
-                      {topic.replyCount}
-                      {topic.replyCount === 1 ? "reply" : "replies"}
+                      {topic.replies.length}
+                      {topic.replies.length === 1 ? "reply" : "replies"}
                     </span>
                   {/if}
                 </div>
@@ -461,7 +469,7 @@ onMount(async () => {
                     {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
                   </a>
                   <a
-                    href="https://arbiscan.io/tx/{topic.hash}"
+                    href="https://arbiscan.io/tx/{topic.transactionHash}"
                     target="_blank"
                     class="hover:text-gray-700 hover:underline decoration-gray-300"
                     onclick={(e) => e.stopPropagation()}
@@ -471,13 +479,13 @@ onMount(async () => {
                 </div>
               </div>
               <div class="text-gray-400 ml-4">
-                {expandedTopics.has(topic.topicId) ? "▼" : "▶"}
+                {expandedTopics.has(topic.id) ? "▼" : "▶"}
               </div>
             </div>
           </button>
 
           <!-- Expanded Content -->
-          {#if expandedTopics.has(topic.topicId)}
+          {#if expandedTopics.has(topic.id)}
             <div
               class="border-t border-gray-200"
               transition:slide={{ duration: 300 }}
@@ -487,7 +495,7 @@ onMount(async () => {
                 <MarkdownRenderer content={topic.content} />
               </div>
 
-              <ReplySection topicId={topic.topicId} {account} replies={getRepliesForTopic(topic.topicId)} />
+              <ReplySection topicId={topic.id} {account} {walletProvider} replies={topic.replies} {onReplyCreated} />
             </div>
           {/if}
         </article>

@@ -1,36 +1,32 @@
 <script>
   import { ethers } from "ethers";
   import { CONTRACT_ADDRESS, CONTRACT_ABI } from "./constants";
+  import { confirmedEvent } from "./forum.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
-  let { topicId, account, replies = [] } = $props();
+  let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
   let replyContent = $state("");
   let submitting = $state(false);
-  let localReplies = $state([]); // 本地状态管理
-
-// 更新回复数据（当父组件传递新的replies时）
-  $effect(() => {
-    localReplies = [...replies]; // 创建新数组避免引用问题
-  });
-
   // 提交回复
   async function submitReply() {
-    if (!replyContent.trim()) return;
+    if (submitting || !replyContent.trim()) return;
     
     submitting = true;
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const activeProvider = walletProvider || window.ethereum;
+      if (!activeProvider) throw new Error("Wallet not connected");
+      const provider = new ethers.BrowserProvider(activeProvider);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
       const tx = await contract.createReply(topicId, replyContent);
       console.log("Reply transaction sent:", tx.hash);
       
-      await tx.wait();
+      const receipt = await tx.wait();
+      onReplyCreated(confirmedEvent(receipt, contract.interface, "ReplyCreated"));
       
       replyContent = "";
-      // 不需要重新获取，父组件会处理数据更新
     } catch (error) {
       console.error("Create reply failed:", error);
       alert("Failed to create reply. See console for details.");
@@ -39,7 +35,6 @@
     }
   }
 
-  // 移除onMount - 数据现在从父组件传递
 </script>
 
 <div class="border-t border-gray-200 bg-gray-50">
@@ -49,16 +44,16 @@
         <div class="text-sm font-bold text-gray-600">
             Replies
         </div>
-        {#if localReplies.length > 0}
-            <div class="text-xs text-gray-500">{localReplies.length} comments</div>
+        {#if replies.length > 0}
+            <div class="text-xs text-gray-500">{replies.length} comments</div>
         {/if}
     </div>
     
-    {#if localReplies.length === 0}
+    {#if replies.length === 0}
         <div class="text-gray-500 text-sm italic py-2">No replies yet.</div>
     {/if}
 
-    {#each localReplies as reply (reply.transactionHash)}
+    {#each replies as reply (reply.id)}
         <div class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{reply.timestamp}</span>

@@ -20,6 +20,7 @@ export function handleTopicCreated(event: TopicCreatedEvent): void {
   topic.author = event.params.author
   topic.content = event.params.content
   topic.timestamp = event.params.timestamp
+  topic.transactionHash = event.transaction.hash
 
   // 保存这个新的 topic 实体
   topic.save()
@@ -37,6 +38,7 @@ export function handleReplyCreated(event: ReplyCreatedEvent): void {
   reply.author = event.params.author
   reply.content = event.params.content
   reply.timestamp = event.params.timestamp
+  reply.transactionHash = event.transaction.hash
 
   // ★★★ 关键步骤：建立与 Topic 的关联关系 ★★★
   // 将 Reply 实体的 'topic' 字段指向对应的 Topic ID

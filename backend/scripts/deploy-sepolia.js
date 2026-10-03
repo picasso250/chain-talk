@@ -1,18 +1,20 @@
-const { ethers, upgrades } = require("hardhat");
+const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("部署可升级的 ChainTalk 合约到 Sepolia 测试网...");
+  console.log("部署不可升级的 ChainTalk 合约到 Sepolia 测试网...");
 
   const [deployer] = await ethers.getSigners();
   console.log("部署账户:", deployer.address);
 
   // 部署合约
   const ChainTalk = await ethers.getContractFactory("ChainTalk");
-  const contract = await upgrades.deployProxy(ChainTalk, [], { initializer: 'initialize' });
+  const contract = await ChainTalk.deploy();
   
   await contract.waitForDeployment();
+  const receipt = await contract.deploymentTransaction().wait();
+  console.log("部署区块:", receipt.blockNumber);
   
-  console.log("ChainTalk 代理合约地址:", await contract.getAddress());
+  console.log("ChainTalk 合约地址:", await contract.getAddress());
   console.log("交易哈希:", contract.deploymentTransaction().hash);
   
   // 验证初始状态

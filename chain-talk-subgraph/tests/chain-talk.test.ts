@@ -1,46 +1,19 @@
-import {
-  assert,
-  describe,
-  test,
-  clearStore,
-  beforeAll,
-  afterAll
-} from "matchstick-as/assembly/index"
-import { BigInt, Address } from "@graphprotocol/graph-ts"
-import { Initialized } from "../generated/schema"
-import { Initialized as InitializedEvent } from "../generated/ChainTalk/ChainTalk"
-import { handleInitialized } from "../src/chain-talk"
-import { createInitializedEvent } from "./chain-talk-utils"
+import { assert, test, clearStore } from "matchstick-as/assembly/index"
+import { Address, BigInt } from "@graphprotocol/graph-ts"
+import { handleTopicCreated, handleReplyCreated } from "../src/chain-talk"
+import { createTopicCreatedEvent, createReplyCreatedEvent } from "./chain-talk-utils"
 
-// Tests structure (matchstick-as >=0.5.0)
-// https://thegraph.com/docs/en/subgraphs/developing/creating/unit-testing-framework/#tests-structure
-
-describe("Describe entity assertions", () => {
-  beforeAll(() => {
-    let version = BigInt.fromI32(234)
-    let newInitializedEvent = createInitializedEvent(version)
-    handleInitialized(newInitializedEvent)
-  })
-
-  afterAll(() => {
-    clearStore()
-  })
-
-  // For more test scenarios, see:
-  // https://thegraph.com/docs/en/subgraphs/developing/creating/unit-testing-framework/#write-a-unit-test
-
-  test("Initialized created and stored", () => {
-    assert.entityCount("Initialized", 1)
-
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
-    assert.fieldEquals(
-      "Initialized",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
-      "version",
-      "234"
-    )
-
-    // More assert options:
-    // https://thegraph.com/docs/en/subgraphs/developing/creating/unit-testing-framework/#asserts
-  })
+test("Indexes topics and replies with their real transaction hashes", () => {
+  clearStore()
+  let author = Address.fromString("0x0000000000000000000000000000000000000001")
+  let topic = createTopicCreatedEvent(BigInt.fromI32(1), author, BigInt.fromI32(10), "Topic")
+  handleTopicCreated(topic)
+  let reply = createReplyCreatedEvent(BigInt.fromI32(1), BigInt.fromI32(1), author, BigInt.fromI32(11), "Reply")
+  handleReplyCreated(reply)
+  assert.entityCount("Topic", 1)
+  assert.entityCount("Reply", 1)
+  assert.fieldEquals("Topic", "1", "transactionHash", topic.transaction.hash.toHexString())
+  assert.fieldEquals("Reply", "1", "transactionHash", reply.transaction.hash.toHexString())
+  assert.fieldEquals("Reply", "1", "topic", "1")
+  clearStore()
 })

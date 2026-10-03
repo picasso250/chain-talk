@@ -11,6 +11,7 @@ type Topic @entity(immutable: true) {
 
   # 创建时的时间戳
   timestamp: BigInt!
+  transactionHash: Bytes!
 
   # 自动关联到这个主题的所有回复。
   # @derivedFrom 指明这个字段是一个反向链接，
@@ -31,6 +32,7 @@ type Reply @entity(immutable: true) {
 
   # 创建时的时间戳
   timestamp: BigInt!
+  transactionHash: Bytes!
 
   # 关联回它所属的 Topic 实体。
   # 这是多对一关系的关键。
