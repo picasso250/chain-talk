@@ -12,15 +12,15 @@ export const NETWORKS = {
   "0x1": {
     name: "Ethereum",
     chainId: 1,
-    contractAddress: "", // TODO: deploy to mainnet
+    contractAddress: "0xec3639B4CC756d39e996447dE1787B09EF646b6F",
     rpcUrl: "https://ethereum-rpc.publicnode.com",
-    deployBlock: 0, // TODO: set after mainnet deployment
+    deployBlock: 26111445,
     etherscanPrefix: "etherscan.io",
     color: "#627eea",
   },
 };
 
-export const DEFAULT_CHAIN_ID = "0xaa36a7"; // Sepolia for testing
+export const DEFAULT_CHAIN_ID = "0x1"; // Ethereum Mainnet
 
 export function getNetworkConfig(chainId) {
   return NETWORKS[chainId] || NETWORKS[DEFAULT_CHAIN_ID];
