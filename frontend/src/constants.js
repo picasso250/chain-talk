@@ -20,7 +20,11 @@ export const NETWORKS = {
   },
 };
 
-export const DEFAULT_CHAIN_ID = "0x1"; // Ethereum Mainnet
+export const DEFAULT_CHAIN_ID = typeof __DEFAULT_CHAIN_ID__ !== "undefined" ? __DEFAULT_CHAIN_ID__ : "0x1";
+
+export function getInitialChainId() {
+  return DEFAULT_CHAIN_ID;
+}
 
 export function getNetworkConfig(chainId) {
   return NETWORKS[chainId] || NETWORKS[DEFAULT_CHAIN_ID];

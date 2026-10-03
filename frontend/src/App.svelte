@@ -3,9 +3,22 @@
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount, watchChain, getCurrentChainId } from "./wallet.js";
   import { loadPosts, postMessage, mergePosts, discussionTopics } from "./forum.js";
-  import { getNetworkConfig, DEFAULT_CHAIN_ID } from "./constants.js";
+  import { getNetworkConfig, getInitialChainId } from "./constants.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
+
+  // Format Unix timestamp to human-readable date
+  function formatTime(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(Number(timestamp) * 1000);
+    return date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
@@ -16,7 +29,7 @@
   let removeChainListener = () => {};
 
   let account = $state(null);
-  let currentChainId = $state(DEFAULT_CHAIN_ID);
+  let currentChainId = $state(getInitialChainId());
   let networkConfig = $derived(getNetworkConfig(currentChainId));
   let topicContent = $state("");
   let posts = $state([]);
@@ -98,7 +111,7 @@
     removeChainListener = () => {};
     account = null;
     walletProvider = null;
-    currentChainId = DEFAULT_CHAIN_ID;
+    currentChainId = getInitialChainId();
   }
 
   // 创建主题
@@ -275,65 +288,49 @@
         <div
           class="relative bg-white p-6 rounded border border-gray-200 shadow-sm"
         >
-           <!-- Toggle Buttons -->
-           <div class="flex gap-2 mb-3">
-             <button
-               class="px-3 py-1 text-sm font-medium transition-colors rounded-md"
-               class:bg-green-100={!isPreviewMode}
-               class:text-green-700={!isPreviewMode}
-               class:bg-gray-100={isPreviewMode}
-               class:text-gray-600={isPreviewMode}
-               onclick={() => isPreviewMode = false}
-             >
-               Edit
-             </button>
-             <button
-               class="px-3 py-1 text-sm font-medium transition-colors rounded-md"
-               class:bg-green-100={isPreviewMode}
-               class:text-green-700={isPreviewMode}
-               class:bg-gray-100={!isPreviewMode}
-               class:text-gray-600={!isPreviewMode}
-               onclick={() => isPreviewMode = true}
-             >
-               Preview
-             </button>
-           </div>
-
-           {#if isPreviewMode}
-             <!-- Preview Mode -->
-             <div class="min-h-24 max-h-64 overflow-y-auto p-3 bg-gray-50 rounded border border-gray-200">
-               {#if topicContent.trim()}
-                 <MarkdownRenderer content={topicContent} />
-               {:else}
-                 <p class="text-gray-400 italic">Nothing to preview...</p>
-               {/if}
-             </div>
-           {:else}
-             <!-- Edit Mode -->
-             <textarea
-               bind:value={topicContent}
-               placeholder="Start a conversation. First line becomes the title..."
-               class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
-               style="height: auto; min-height: 96px; max-height: 256px;"
-               oninput={(e) => {
-                 e.target.style.height = 'auto';
-                 e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 96), 256) + 'px';
-               }}
-             ></textarea>
-           {/if}
+          {#if isPreviewMode}
+            <!-- Preview Mode -->
+            <div class="min-h-24 max-h-64 overflow-y-auto p-3 bg-gray-50 rounded border border-gray-200">
+              {#if topicContent.trim()}
+                <MarkdownRenderer content={topicContent} />
+              {:else}
+                <p class="text-gray-400 italic">Nothing to preview...</p>
+              {/if}
+            </div>
+          {:else}
+            <!-- Edit Mode -->
+            <textarea
+              bind:value={topicContent}
+              placeholder="Start a conversation. First line becomes the title..."
+              class="w-full bg-transparent text-base outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
+              style="height: auto; min-height: 96px; max-height: 256px;"
+              oninput={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(Math.max(e.target.scrollHeight, 96), 256) + 'px';
+              }}
+            ></textarea>
+          {/if}
           <div
             class="flex justify-between items-center mt-4 border-t border-stone-900 pt-4"
           >
             <span class="text-xs text-gray-500">
-              Immutable • Permanent • Anonymous
+              Immutable • Permanent • Censorship-resistant
             </span>
-            <button
-              onclick={createTopic}
-              disabled={posting || !topicContent.trim()}
-              class="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {posting ? "Posting..." : "POST TOPIC"}
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                onclick={() => isPreviewMode = !isPreviewMode}
+                class="text-sm px-3 py-2 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300"
+              >
+                {isPreviewMode ? "← Back to edit" : "Preview"}
+              </button>
+              <button
+                onclick={createTopic}
+                disabled={posting || !topicContent.trim()}
+                class="bg-green-600 text-white hover:bg-green-700 px-4 py-2 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {posting ? "Posting..." : "POST TOPIC"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -389,7 +386,7 @@
                 </div>
                 <div class="flex items-center gap-3 text-xs text-gray-500">
                   <span class="text-green-600 font-medium"
-                    >{topic.timestamp}</span
+                    >{formatTime(topic.timestamp)}</span
                   >
                   <a
                     href="https://{networkConfig.etherscanPrefix}/address/{topic.author}"

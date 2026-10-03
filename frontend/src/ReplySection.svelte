@@ -10,6 +10,19 @@
   let replyTarget = $state(null);
   let networkConfig = $derived(getNetworkConfig(chainId));
 
+  // Format Unix timestamp to human-readable date
+  function formatTime(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(Number(timestamp) * 1000);
+    return date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
   // 提交回复
   async function submitReply() {
     if (submitting || !replyContent.trim()) return;
@@ -49,7 +62,7 @@
     {#each replies as reply (reply.id)}
         <div id={`post-${reply.id}`} class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
-          <span class="text-green-600 font-bold">{reply.timestamp}</span>
+          <span class="text-green-600 font-bold">{formatTime(reply.timestamp)}</span>
           <a href={`https://${networkConfig.etherscanPrefix}/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
             {reply.author.slice(0, 6)}...{reply.author.slice(-4)}
           </a>

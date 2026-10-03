@@ -8,4 +8,7 @@ export default defineConfig({
     tailwindcss(),
     svelte()
   ],
+  define: {
+    __DEFAULT_CHAIN_ID__: JSON.stringify(process.env.VITE_DEFAULT_CHAIN_ID || "0x1"),
+  },
 })
