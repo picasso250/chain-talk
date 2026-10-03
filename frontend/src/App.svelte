@@ -3,6 +3,7 @@
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
   import { loadPosts, postMessage, mergePosts, discussionTopics } from "./forum.js";
+  import { readCachedPosts, cachePosts } from "./cache.js";
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
@@ -158,6 +159,7 @@
     try {
       const indexedPosts = await loadPosts();
       posts = mergePosts(indexedPosts, posts);
+      cachePosts(indexedPosts);
     } catch (error) {
       console.error("Fetch topics failed:", error);
       loadError = "Unable to load discussions. Please retry.";
@@ -172,6 +174,7 @@
   }
 
   onMount(() => {
+    posts = readCachedPosts();
     // 设置EIP-6963钱包检测
     const cleanup = discoverWallets(wallets => { detectedWallets = wallets; });
     
@@ -342,7 +345,7 @@
           {loadError}
           <button onclick={fetchTopics} disabled={loadingTopics} class="underline ml-2">Retry</button>
         </div>
-      {:else if loadingTopics}
+      {:else if loadingTopics && topics.length === 0}
         <div class="text-center py-12 text-gray-500 italic">
           Loading topics...
         </div>
