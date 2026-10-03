@@ -1,8 +1,8 @@
 {
-  "arbitrum-one": {
+  "mainnet": {
     "ChainTalk": {
-      "address": "0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380",
-      "startBlock": 419912164
+      "address": "0xec3639B4CC756d39e996447dE1787B09EF646b6F",
+      "startBlock": 26111445
     }
   }
 }

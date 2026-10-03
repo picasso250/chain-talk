@@ -1,14 +1,12 @@
 <script>
   import { postMessage } from "./forum.js";
-  import { getNetworkConfig, DEFAULT_CHAIN_ID } from "./constants.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
 
-  let { topicId, account, walletProvider = null, replies = [], onReplyCreated, chainId = DEFAULT_CHAIN_ID } = $props();
+  let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
   let replyContent = $state("");
   let submitting = $state(false);
   let replyTarget = $state(null);
-  let networkConfig = $derived(getNetworkConfig(chainId));
 
   // Format Unix timestamp to human-readable date
   function formatTime(timestamp) {
@@ -29,7 +27,7 @@
 
     submitting = true;
     try {
-      const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId, chainId);
+      const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId);
       onReplyCreated(reply);
       replyContent = "";
       replyTarget = null;
@@ -63,11 +61,11 @@
         <div id={`post-${reply.id}`} class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{formatTime(reply.timestamp)}</span>
-          <a href={`https://${networkConfig.etherscanPrefix}/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
+          <a href={`https://etherscan.io/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
             {reply.author.slice(0, 6)}...{reply.author.slice(-4)}
           </a>
           <a
-            href={`https://${networkConfig.etherscanPrefix}/tx/${reply.transactionHash}`}
+            href={`https://etherscan.io/tx/${reply.transactionHash}`}
             target="_blank"
             class="hover:text-gray-700 hover:underline decoration-gray-300"
           >

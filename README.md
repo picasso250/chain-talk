@@ -18,7 +18,7 @@
 - 🔒 **固定规则** - 普通合约，无代理、无 owner、无升级入口
 - ⚡ **极简合约** - 仅 22 行代码，1 个变量，1 个函数，1 个事件
 - 🎨 **现代化 UI** - 基于 Svelte 5 (Runes) + Tailwind CSS
-- 🌐 **多网络支持** - 前端自动适配 Sepolia 测试网和以太坊主网
+- 🌐 **固定主网** - 正式前端的数据源和合约地址固定为以太坊主网
 
 ## 📋 合约信息
 
@@ -81,7 +81,9 @@ contract ChainTalk {
 
 ### 数据索引
 - **The Graph**: Subgraph 索引 Posted 事件
-- **直接 RPC**: 前端支持直接从 RPC 读取事件（测试阶段）
+- **Studio 查询**: 前端固定读取 `mainnet-v1`，未发布到 Graph Network
+  - 查询地址：https://api.studio.thegraph.com/query/1723159/chain-talk/mainnet-v1
+  - 部署 ID：`QmdUtYJJhaMDRjdA8pJ3ZhKe32LtT21kVJYyi94EusrbVF`
 
 ## 🚀 快速开始
 
@@ -183,12 +185,9 @@ chain-talk/
 - 所有帖子共享顺序 ID
 - 时间戳通过区块号查询，不重复存储在事件中
 
-### 多网络支持
+### 固定主网
 
-前端通过 `constants.js` 中的 `NETWORKS` 配置自动适配：
-- 根据钱包当前连接的 chainId 选择合约地址和 RPC
-- 网络徽章和 Etherscan 链接动态生成
-- 切换网络后自动重新加载数据
+前端固定使用 Ethereum 主网合约地址、Studio 查询版本和 Etherscan 链接。钱包切换网络不会改变网站的数据源；不检查或自动切换钱包网络，发送交易时由用户在钱包中选择 Ethereum 主网。Sepolia 部署仅保留为测试记录。
 
 ## 🤝 贡献指南
 

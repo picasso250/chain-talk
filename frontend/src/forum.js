@@ -1,48 +1,42 @@
-import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
-import { CONTRACT_ABI, getNetworkConfig, DEFAULT_CHAIN_ID } from "./constants.js";
-import { ensureNetwork, getCurrentChainId } from "./wallet.js";
+import { BrowserProvider, Contract } from "ethers";
+import { CONTRACT_ABI, CONTRACT_ADDRESS, SUBGRAPH_URL } from "./constants.js";
 
-const BLOCK_CHUNK = 5000; // Read logs in chunks to avoid RPC limits
-
-export async function postMessage(provider, content, replyTo = "0", chainId = DEFAULT_CHAIN_ID) {
-  await ensureNetwork(provider, chainId);
-  const config = getNetworkConfig(chainId);
+export async function postMessage(provider, content, replyTo = "0") {
   const signer = await new BrowserProvider(provider).getSigner();
-  const contract = new Contract(config.contractAddress, CONTRACT_ABI, signer);
+  const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
   const tx = await contract.post(content, replyTo);
   const receipt = await tx.wait();
   return confirmedEvent(receipt, contract.interface, signer.provider);
 }
 
-export async function loadPosts(chainId = DEFAULT_CHAIN_ID) {
-  const config = getNetworkConfig(chainId);
-  const provider = new JsonRpcProvider(config.rpcUrl);
-  try {
-    const contract = new Contract(config.contractAddress, CONTRACT_ABI, provider);
-    const latest = await provider.getBlockNumber();
-    const posts = [];
-    const blockCache = new Map();
-    for (let from = config.deployBlock; from <= latest; from += BLOCK_CHUNK) {
-      const to = Math.min(from + BLOCK_CHUNK - 1, latest);
-      const events = await contract.queryFilter("Posted", from, to);
-      for (const e of events) {
-        if (!blockCache.has(e.blockNumber)) {
-          const block = await provider.getBlock(e.blockNumber);
-          blockCache.set(e.blockNumber, block?.timestamp ?? 0);
-        }
-        posts.push({
-          id: e.args.id.toString(),
-          replyTo: e.args.replyTo.toString(),
-          author: e.args.author,
-          content: e.args.content,
-          timestamp: blockCache.get(e.blockNumber).toString(),
-          transactionHash: e.transactionHash,
-        });
-      }
+export async function loadPosts(request = fetch) {
+  const posts = [];
+  let after = "";
+  while (true) {
+    const response = await request(SUBGRAPH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `query Posts($after: ID!) {
+          posts(first: 1000, orderBy: id, orderDirection: asc, where: { id_gt: $after }) {
+            id replyTo author content timestamp transactionHash
+          }
+          _meta { hasIndexingErrors }
+        }`,
+        variables: { after },
+      }),
+    });
+    if (!response.ok) throw new Error(`Subgraph HTTP ${response.status}`);
+    const { data, errors } = await response.json();
+    if (errors?.length || !Array.isArray(data?.posts) || data?._meta?.hasIndexingErrors) {
+      throw new Error(errors?.[0]?.message ?? "Subgraph indexing or response error");
     }
-    return posts;
-  } finally {
-    provider.destroy();
+    const page = data.posts;
+    posts.push(...page);
+    if (page.length < 1000) return posts;
+    const next = page.at(-1).id;
+    if (next <= after) throw new Error("Subgraph pagination did not advance");
+    after = next;
   }
 }
 
@@ -76,7 +70,7 @@ export function discussionTopics(posts) {
 
 export async function confirmedEvent(receipt, contractInterface, provider) {
   for (const log of receipt.logs) {
-    // Match by event signature rather than address — works across networks
+    if (log.address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) continue;
     const event = contractInterface.parseLog(log);
     if (event?.name !== "Posted") continue;
     const { args } = event;

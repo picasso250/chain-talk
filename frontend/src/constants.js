@@ -1,34 +1,6 @@
-// Network configurations
-export const NETWORKS = {
-  "0xaa36a7": {
-    name: "Sepolia",
-    chainId: 11155111,
-    contractAddress: "0x759723E3869181616D6567458b59bCbA365FEcEe",
-    rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
-    deployBlock: 11835312,
-    etherscanPrefix: "sepolia.etherscan.io",
-    color: "#7b61ff",
-  },
-  "0x1": {
-    name: "Ethereum",
-    chainId: 1,
-    contractAddress: "0xec3639B4CC756d39e996447dE1787B09EF646b6F",
-    rpcUrl: "https://ethereum-rpc.publicnode.com",
-    deployBlock: 26111445,
-    etherscanPrefix: "etherscan.io",
-    color: "#627eea",
-  },
-};
-
-export const DEFAULT_CHAIN_ID = typeof __DEFAULT_CHAIN_ID__ !== "undefined" ? __DEFAULT_CHAIN_ID__ : "0x1";
-
-export function getInitialChainId() {
-  return DEFAULT_CHAIN_ID;
-}
-
-export function getNetworkConfig(chainId) {
-  return NETWORKS[chainId] || NETWORKS[DEFAULT_CHAIN_ID];
-}
+// Fixed Ethereum mainnet deployment.
+export const CONTRACT_ADDRESS = "0xec3639B4CC756d39e996447dE1787B09EF646b6F";
+export const SUBGRAPH_URL = "https://api.studio.thegraph.com/query/1723159/chain-talk/mainnet-v1";
 
 export const CONTRACT_ABI = [
   {
