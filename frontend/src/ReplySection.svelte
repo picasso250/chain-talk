@@ -5,8 +5,17 @@
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
   let replyContent = $state("");
+  let isPreviewMode = $state(false);
   let submitting = $state(false);
   let replyTarget = $state(null);
+
+  function autoResize(textarea) {
+    $effect(() => {
+      replyContent;
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(Math.max(textarea.scrollHeight, 96), 256) + "px";
+    });
+  }
 
   // Format Unix timestamp to human-readable date
   function formatTime(timestamp) {
@@ -30,6 +39,7 @@
       const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId);
       onReplyCreated(reply);
       replyContent = "";
+      isPreviewMode = false;
       replyTarget = null;
     } catch (error) {
       console.error("Create reply failed:", error);
@@ -94,12 +104,29 @@
               <button class="underline ml-2" disabled={submitting} onclick={() => replyTarget = null}>Cancel</button>
             </div>
           {/if}
-          <textarea
-            bind:value={replyContent}
-            placeholder="Write a reply..."
-            class="w-full bg-transparent text-sm outline-none resize-none h-20 placeholder-gray-400 leading-relaxed"
-          ></textarea>
-          <div class="flex justify-end mt-3">
+          {#if isPreviewMode}
+            <div class="min-h-24 max-h-64 overflow-y-auto p-3 bg-gray-50 rounded border border-gray-200">
+              {#if replyContent.trim()}
+                <MarkdownRenderer content={replyContent} />
+              {:else}
+                <p class="text-gray-400 italic">Nothing to preview...</p>
+              {/if}
+            </div>
+          {:else}
+            <textarea
+              use:autoResize
+              bind:value={replyContent}
+              placeholder="Write a reply..."
+              class="w-full bg-transparent text-sm outline-none resize-none min-h-24 max-h-64 placeholder-gray-400 leading-relaxed"
+            ></textarea>
+          {/if}
+          <div class="flex justify-end items-center gap-2 mt-3">
+            <button
+              onclick={() => isPreviewMode = !isPreviewMode}
+              class="text-sm px-3 py-1 border border-gray-300 hover:border-green-500 hover:text-green-600 transition-colors duration-300"
+            >
+              {isPreviewMode ? "← Back to edit" : "Preview"}
+            </button>
             <button
               onclick={submitReply}
               disabled={!replyContent.trim() || submitting}
