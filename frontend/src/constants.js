@@ -1,5 +1,5 @@
-// Sepolia Testnet Deployment
-export const CONTRACT_ADDRESS = "0xec3639B4CC756d39e996447dE1787B09EF646b6F";
+// Sepolia Testnet Deployment (v2, no timestamp)
+export const CONTRACT_ADDRESS = "0x759723E3869181616D6567458b59bCbA365FEcEe";
 
 // Sepolia Chain ID (Hex)
 export const TARGET_CHAIN_ID = "0xaa36a7"; // 11155111

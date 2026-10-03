@@ -4,7 +4,7 @@ import { ensureNetwork } from "./wallet.js";
 
 // Sepolia testnet RPC for reading events directly (no The Graph needed during testing)
 const RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com";
-const DEPLOY_BLOCK = 11834966;
+const DEPLOY_BLOCK = 11835312;
 const BLOCK_CHUNK = 5000; // Read logs in chunks to avoid RPC limits
 
 export async function postMessage(provider, content, replyTo = "0") {
