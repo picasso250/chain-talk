@@ -53,18 +53,4 @@ contract ChainTalk {
         _replyIdCounter++;
         emit ReplyCreated(_replyIdCounter, _topicId, msg.sender, block.timestamp, _content);
     }
-
-    /**
-     * @dev 获取当前主题ID计数器
-     */
-    function getTopicIdCounter() public view returns (uint256) {
-        return _topicIdCounter;
-    }
-
-    /**
-     * @dev 获取当前回复ID计数器
-     */
-    function getReplyIdCounter() public view returns (uint256) {
-        return _replyIdCounter;
-    }
 }

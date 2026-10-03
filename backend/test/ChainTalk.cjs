@@ -33,9 +33,9 @@ test('empty topics revert without consuming IDs', async () => {
   const f = await deploy();
   await assert.rejects(f.createTopic.staticCall(''), /Content cannot be empty/);
   await assert.rejects(async () => { await (await f.createTopic('', { gasLimit: 100000 })).wait(); }, error => error.code === 'CALL_EXCEPTION');
-  assert.equal(await f.getTopicIdCounter(), 0n);
-  await (await f.createTopic('First')).wait();
-  assert.equal(await f.getTopicIdCounter(), 1n);
+  const receipt = await (await f.createTopic('First')).wait();
+  const event = f.interface.parseLog(receipt.logs[0]);
+  assert.equal(event.args.topicId, 1n);
 });
 test('no initialization, ownership or upgrade entry points', async () => {
   const f = await deploy();
@@ -45,22 +45,20 @@ test('no initialization, ownership or upgrade entry points', async () => {
     await assert.rejects(provider.call({ to: await f.getAddress(), data: admin.encodeFunctionData(name,args) }), error => error.code === 'CALL_EXCEPTION');
   }
 });
-test('zero and future topics reject replies without changing counters', async () => {
+test('zero and future topics reject replies', async () => {
   const f = await deploy();
   await assert.rejects(f.createReply.staticCall(1,'Reply'), /Topic does not exist/);
   await (await f.createTopic('First')).wait();
   for (const id of [0n,2n,ethers.MaxUint256]) {
     await assert.rejects(f.createReply.staticCall(id,'Reply'), /Topic does not exist/);
   }
-  assert.equal(await f.getReplyIdCounter(), 0n);
 });
-test('empty replies leave counts unchanged', async () => {
+test('empty replies revert', async () => {
   const f = await deploy();
   await (await f.createTopic('First')).wait();
   await assert.rejects(f.createReply.staticCall(1,''), /Content cannot be empty/);
-  assert.equal(await f.getReplyIdCounter(), 0n);
 });
-test('valid replies emit content and update global counter', async () => {
+test('valid replies emit content with sequential IDs', async () => {
   const f = await deploy();
   await (await f.createTopic('First')).wait();
   await (await f.createTopic('Second')).wait();
@@ -72,7 +70,6 @@ test('valid replies emit content and update global counter', async () => {
     assert.equal(event.name,'ReplyCreated');
     assert.deepEqual([...event.args], [++id,topic,author.address,BigInt(block.timestamp),'你好\n**Reply**']);
   }
-  assert.equal(await f.getReplyIdCounter(),3n);
 });
 
 test('deployment dry run sends no transaction and rejects the wrong chain', async () => {
