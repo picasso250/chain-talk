@@ -7,16 +7,7 @@
   import ReplySection from "./ReplySection.svelte";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
   import { formatTime } from "./format.js";
-
-
-  // Measure after Svelte has applied the bound value, including programmatic changes.
-  function autoResize(textarea) {
-    $effect(() => {
-      topicContent;
-      textarea.style.height = "auto";
-      textarea.style.height = Math.min(Math.max(textarea.scrollHeight, 96), 256) + "px";
-    });
-  }
+  import { autoResize } from "./autoResize.js";
 
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
@@ -52,7 +43,6 @@
       });
 
       showWalletPicker = false;
-      void fetchTopics();
 
     } catch (error) {
       console.error("Connection failed:", error);
@@ -290,7 +280,7 @@
           {:else}
             <!-- Edit Mode -->
             <textarea
-              use:autoResize
+              use:autoResize={topicContent}
               bind:value={topicContent}
               disabled={posting}
               placeholder="Start a conversation. First line becomes the title..."
@@ -356,7 +346,6 @@
             type="button"
             class="w-full p-4 cursor-pointer hover:bg-gray-50 transition-colors text-left"
             onclick={() => toggleTopic(topic.id)}
-            onkeydown={(e) => e.key === "Enter" && toggleTopic(topic.id)}
           >
             <div class="flex justify-between items-start">
               <div class="flex-1">

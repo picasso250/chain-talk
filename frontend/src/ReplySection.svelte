@@ -2,6 +2,7 @@
   import { postMessage } from "./forum.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
   import { formatTime } from "./format.js";
+  import { autoResize } from "./autoResize.js";
 
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
@@ -9,15 +10,6 @@
   let isPreviewMode = $state(false);
   let submitting = $state(false);
   let replyTarget = $state(null);
-
-  function autoResize(textarea) {
-    $effect(() => {
-      replyContent;
-      textarea.style.height = "auto";
-      textarea.style.height = Math.min(Math.max(textarea.scrollHeight, 96), 256) + "px";
-    });
-  }
-
 
   // 提交回复
   async function submitReply() {
@@ -103,7 +95,7 @@
             </div>
           {:else}
             <textarea
-              use:autoResize
+              use:autoResize={replyContent}
               bind:value={replyContent}
               disabled={submitting}
               placeholder="Write a reply..."

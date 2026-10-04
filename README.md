@@ -162,7 +162,6 @@ chain-talk/
 │   │   ├── constants.js      # 多网络合约配置
 │   │   ├── forum.js          # 数据逻辑（发帖、读取事件）
 │   │   └── wallet.js         # EIP-6963 钱包管理
-│   ├── worker.js             # Cloudflare Worker 入口
 │   ├── wrangler.toml         # Worker 配置
 │   └── package.json
 ├── backend/                  # 智能合约

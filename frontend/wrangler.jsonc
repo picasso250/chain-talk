@@ -1,10 +1,8 @@
 {
   "name": "chain-talk",
-  "main": "worker.js",
   "compatibility_date": "2024-01-01",
   "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS"
+    "directory": "./dist"
   },
   "routes": [
     {
