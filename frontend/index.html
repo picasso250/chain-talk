@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>链上论坛</title>
+    <!-- AI / Developer reader guide: curl this page to get the subgraph endpoint -->
+    <meta name="chain-talk:network" content="Arbitrum One (chainId 42161)" />
+    <meta name="chain-talk:contract" content="0x6Cb266BB285BA5F6591e449543d259277d57C700" />
+    <meta name="chain-talk:subgraph" content="https://api.studio.thegraph.com/query/1723159/chain-talk-arbitrum/v0.0.1" />
+    <meta name="chain-talk:query-example" content="POST https://api.studio.thegraph.com/query/1723159/chain-talk-arbitrum/v0.0.1  Body: {\"query\":\"{ posts { id replyTo author content timestamp transactionHash } }\"}" />
   </head>
   <body>
     <div id="app"></div>
