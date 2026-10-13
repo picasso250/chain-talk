@@ -3,7 +3,7 @@ const { ethers } = require("ethers");
 async function main() {
     console.log("🔍 查找合约创建区块高度...");
     
-    const PROXY_ADDRESS = "0xb9A8A83c8e599E19ad2E3E1C66721A63d2076380";
+    const CONTRACT_ADDRESS = "0x6Cb266BB285BA5F6591e449543d259277d57C700";
     
     // 连接到 Arbitrum
     const provider = new ethers.JsonRpcProvider("https://arb1.arbitrum.io/rpc");
@@ -23,7 +23,7 @@ async function main() {
         
         while (left <= right) {
             const mid = Math.floor((left + right) / 2);
-            const code = await provider.getCode(PROXY_ADDRESS, mid);
+            const code = await provider.getCode(CONTRACT_ADDRESS, mid);
             
             if (code.length > 2) { // 合约存在
                 creationBlock = mid;
@@ -33,7 +33,7 @@ async function main() {
             }
         }
         
-        if (creationBlock) {
+        if (creationBlock !== null) {
             console.log(`✅ 合约创建区块高度: ${creationBlock}`);
             
             // 获取创建区块的详细信息
@@ -43,11 +43,12 @@ async function main() {
             
             // 查找该区块中的合约创建交易
             console.log("\n🔍 查找创建交易...");
-            const blockWithTxs = await provider.getBlock(creationBlock, true);
+            const blockWithTxs = await provider.getBlock(creationBlock);
             
-            for (const tx of blockWithTxs.transactions) {
-                if (tx.to && tx.to.toLowerCase() === PROXY_ADDRESS.toLowerCase()) {
-                    console.log(`🎯 找到创建交易: ${tx.hash}`);
+            for (const hash of blockWithTxs.transactions) {
+                const receipt = await provider.getTransactionReceipt(hash);
+                if (receipt?.contractAddress?.toLowerCase() === CONTRACT_ADDRESS.toLowerCase()) {
+                    console.log(`🎯 找到创建交易: ${hash}`);
                     break;
                 }
             }
@@ -57,12 +58,13 @@ async function main() {
         
     } catch (error) {
         console.error("❌ 查找失败:", error.message);
+        process.exitCode = 1;
+    } finally {
+        provider.destroy();
     }
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error(error);
-        process.exit(1);
-    });
+main().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+});

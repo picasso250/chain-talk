@@ -1,9 +1,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Interface } from 'ethers';
-import { loadPosts, confirmedEvent, mergePosts, discussionTopics } from './forum.js';
+import { postMessage, loadPosts, confirmedEvent, mergePosts, discussionTopics } from './forum.js';
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from './constants.js';
 const post = (id, replyTo = '0') => ({ id, replyTo, timestamp: '10', content: 'hello' });
+
+test('topics and replies reject other chains before requesting a signer or transaction', async () => {
+  for (const chainId of ['0x1', '0xaa36a7']) {
+    for (const replyTo of ['0', '1']) {
+      const calls = [];
+      const provider = { request: async ({ method }) => { calls.push(method); return chainId; } };
+      await assert.rejects(postMessage(provider, 'hello', replyTo), /Switch your wallet to Arbitrum One/);
+      assert.deepEqual(calls, ['eth_chainId']);
+    }
+  }
+});
+
+test('rejects a wallet that changes chains while obtaining the signer', async () => {
+  let checks = 0;
+  const provider = { request: async ({ method }) => {
+    if (method === 'eth_chainId') return checks++ === 0 ? '0xa4b1' : '0x1';
+    if (method === 'eth_accounts') return ['0x0000000000000000000000000000000000000001'];
+    assert.fail(`Unexpected wallet request: ${method}`);
+  } };
+  await assert.rejects(postMessage(provider, 'hello'), /network changed/);
+});
 test('nested replies stay under their root, with no number precision loss', () => {
   const data = [post('9007199254740994','9007199254740993'),post('2','1'),post('1'),post('9007199254740993','2'),post('3')];
   const topics = discussionTopics(data);

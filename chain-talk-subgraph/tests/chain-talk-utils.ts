@@ -8,8 +8,8 @@ export function createPostedEvent(id: i32, replyTo: i32): Posted {
     new ethereum.EventParam("id", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(id))),
     new ethereum.EventParam("replyTo", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(replyTo))),
     new ethereum.EventParam("author", ethereum.Value.fromAddress(Address.fromString("0x0000000000000000000000000000000000000001"))),
-    new ethereum.EventParam("timestamp", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(10))),
     new ethereum.EventParam("content", ethereum.Value.fromString("Post"))
   ]
+  event.block.timestamp = BigInt.fromI32(10)
   return event
 }

@@ -1,12 +1,17 @@
 import { BrowserProvider, Contract } from "ethers";
-import { CONTRACT_ABI, CONTRACT_ADDRESS, SUBGRAPH_URL } from "./constants.js";
+import { CHAIN_ID, CHAIN_NAME, CONTRACT_ABI, CONTRACT_ADDRESS, SUBGRAPH_URL } from "./constants.js";
 
 export async function postMessage(provider, content, replyTo = "0") {
+  if (BigInt(await provider.request({ method: "eth_chainId" })) !== BigInt(CHAIN_ID)) {
+    throw new Error(`Switch your wallet to ${CHAIN_NAME} (chain ID ${CHAIN_ID}) before posting.`);
+  }
   // Normalize line endings to LF to save calldata (CRLF would waste 1 byte per newline)
   const normalizedContent = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const signer = await new BrowserProvider(provider).getSigner();
+  const browserProvider = new BrowserProvider(provider, CHAIN_ID);
+  await browserProvider.getNetwork();
+  const signer = await browserProvider.getSigner();
   const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-  const tx = await contract.post(normalizedContent, replyTo);
+  const tx = await contract.post(normalizedContent, replyTo, { chainId: CHAIN_ID });
   const receipt = await tx.wait();
   try {
     return await confirmedEvent(receipt, contract.interface, signer.provider);

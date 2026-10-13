@@ -1,6 +1,6 @@
-import { CONTRACT_ADDRESS } from "./constants.js";
+import { CHAIN_ID, CONTRACT_ADDRESS } from "./constants.js";
 
-export const CACHE_KEY = `chain-talk:1:${CONTRACT_ADDRESS.toLowerCase()}:posts:v1`;
+export const CACHE_KEY = `chain-talk:${CHAIN_ID}:${CONTRACT_ADDRESS.toLowerCase()}:posts:v1`;
 
 export function readCachedPosts(storage) {
   try {

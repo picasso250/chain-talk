@@ -3,14 +3,14 @@
 > 极简以太坊合约驱动的论坛：已确认记录无修改或删除入口，合约规则不可升级
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Network: Ethereum](https://img.shields.io/badge/Network-Ethereum-627eea)](https://ethereum.org/)
+[![Network: Arbitrum One](https://img.shields.io/badge/Network-Arbitrum_One-28a0f0)](https://arbitrum.io/)
 
 ## 🌟 在线演示
 
-- **正式网站**: https://talk.io99.xyz
-- **测试网**: https://chain-talk-sepolia.xi-aochi.workers.dev/
+- **本分支网站**: https://talka.io99.xyz
+- **独立部署**: `arbitrum` 分支运行 Arbitrum One；`main` 分支运行 Ethereum 主网（https://talk.io99.xyz），两者不共享帖子或索引。
 - **零门槛访问**: 无需连接钱包即可浏览所有内容
-- **完全去中心化**: 帖子记录写入以太坊交易和事件日志；网站与索引服务负责展示
+- **完全去中心化**: 帖子记录写入 Arbitrum One 交易和事件日志；网站与索引服务负责展示
 
 ## ✨ 特色功能
 
@@ -23,27 +23,21 @@
 - 💬 **楼中楼回复** - 支持回复的回复，无限嵌套
 - ⚡ **秒开体验** - localStorage 缓存，打开即显示，后台完整查询并刷新
 - 🌐 **多钱包支持** - EIP-6963 标准，兼容 MetaMask、Rabby 等
-- 💰 **无平台收费** - 发帖人支付以太坊交易 Gas 费
+- 💰 **无平台收费** - 发帖人支付 Arbitrum One 交易 Gas 费（ETH）
 
 ## 📋 合约信息
 
-### Sepolia 测试网（当前部署）
+### Arbitrum One（本分支）
 
-- **合约地址**: `0x759723E3869181616D6567458b59bCbA365FEcEe`
-- **Chain ID**: 11155111 (0xaa36a7)
-- **部署区块**: 11835312
+- **合约地址**: `0x6Cb266BB285BA5F6591e449543d259277d57C700`
+- **Chain ID**: 42161 (0xa4b1)
+- **部署区块**: 514306515
 - **编译器**: solc 0.8.37
-- **区块浏览器**: [Sepolia Etherscan](https://sepolia.etherscan.io/address/0x759723E3869181616D6567458b59bCbA365FEcEe)
+- **区块浏览器**: [Arbiscan](https://arbiscan.io/address/0x6Cb266BB285BA5F6591e449543d259277d57C700)
+- **Worker 名称**: `chain-talk-arbitrum`
+- **正式网站**: https://talka.io99.xyz
 
-### 以太坊主网（已上线）
-
-- **合约地址**: `0xec3639B4CC756d39e996447dE1787B09EF646b6F`
-- **Chain ID**: 1 (0x1)
-- **部署区块**: 26111445
-- **编译器**: solc 0.8.37
-- **区块浏览器**: [Etherscan](https://etherscan.io/address/0xec3639B4CC756d39e996447dE1787B09EF646b6F)
-- **源码验证**: [Sourcify](https://repo.sourcify.dev/1/0xec3639B4CC756d39e996447dE1787B09EF646b6F) — 创建和运行字节码均为 `exact_match`（2026-10-03）；[Etherscan](https://etherscan.io/address/0xec3639B4CC756d39e996447dE1787B09EF646b6F#code) 已通过验证（`Pass - Verified`）。
-- **正式网站**: https://talk.io99.xyz
+`backend/deploy-*.json` 中的 Ethereum 和 Sepolia 文件仅为历史部署记录，不是本分支配置。
 
 ### 合约源码
 
@@ -87,9 +81,8 @@ contract ChainTalk {
 
 ### 数据索引
 - **The Graph**: Subgraph 索引 Posted 事件
-- **Studio 查询**: 前端固定读取 `mainnet-v1`，未发布到 Graph Network
-  - 查询地址：https://api.studio.thegraph.com/query/1723159/chain-talk/mainnet-v1
-  - 部署 ID：`QmdUtYJJhaMDRjdA8pJ3ZhKe32LtT21kVJYyi94EusrbVF`
+- **Studio 查询**: 前端固定读取 `chain-talk-arbitrum/v0.0.1`
+  - 查询地址：https://api.studio.thegraph.com/query/1723159/chain-talk-arbitrum/v0.0.1
 
 ## 💰 使用成本
 
@@ -108,15 +101,12 @@ contract ChainTalk {
 
 ```bash
 # 克隆项目
-git clone https://github.com/picasso250/chain-talk.git
+git clone --branch arbitrum https://github.com/picasso250/chain-talk.git
 cd chain-talk
 
 # 安装前端依赖
 cd frontend
 npm install
-
-# 启动开发服务器
-npm run dev
 
 # 构建生产版本
 npm run build
@@ -143,7 +133,7 @@ npm run build
 # 运行测试
 npm test
 
-# 预估部署（需设置 RPC_URL、PRIVATE_KEY、CHAIN_ID）
+# 预估部署（需设置 Arbitrum One RPC_URL、PRIVATE_KEY、CHAIN_ID=42161）
 node deploy.js
 
 # 明确广播部署交易
@@ -159,10 +149,10 @@ chain-talk/
 │   │   ├── App.svelte        # 主应用组件
 │   │   ├── ReplySection.svelte    # 回复组件
 │   │   ├── MarkdownRenderer.svelte # Markdown 渲染组件
-│   │   ├── constants.js      # 多网络合约配置
+│   │   ├── constants.js      # 本分支网络与合约配置
 │   │   ├── forum.js          # 数据逻辑（发帖、读取事件）
 │   │   └── wallet.js         # EIP-6963 钱包管理
-│   ├── wrangler.toml         # Worker 配置
+│   ├── wrangler.jsonc         # Worker 配置
 │   └── package.json
 ├── backend/                  # 智能合约
 │   ├── contracts/
@@ -196,9 +186,13 @@ chain-talk/
 - 所有帖子共享顺序 ID
 - 时间戳通过区块号查询，不重复存储在事件中
 
-### 固定主网
+### 独立分支部署
 
-前端固定使用 Ethereum 主网合约地址、Studio 查询版本和 Etherscan 链接。钱包切换网络不会改变网站的数据源；不检查或自动切换钱包网络，发送交易时由用户在钱包中选择 Ethereum 主网。Sepolia 部署仅保留为测试记录。
+前端固定使用 `frontend/src/constants.js` 中的 Arbitrum One 配置。钱包切换网络不会改变读取数据源；发帖和回复前检查 chain ID，网络不匹配时提示用户在钱包中切换。缓存按 chain ID 和合约地址隔离。
+
+Worker 名称和域名配置在 `frontend/wrangler.jsonc`。Subgraph 的 `subgraph.yaml` 和 `networks.json` 使用同一合约地址和起始区块，`package.json` 中的部署目标为 `chain-talk-arbitrum`。本地 Graph Node 的 `host.docker.internal:8545` 必须连接 Arbitrum One RPC 或对应分叉。
+
+两个分支使用同一套应用逻辑，各自保留部署配置；同步代码时不要覆盖这些配置。
 
 ## 🤝 贡献指南
 

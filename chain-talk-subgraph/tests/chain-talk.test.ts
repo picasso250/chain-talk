@@ -10,6 +10,8 @@ test("Indexes roots and nested replies with real transaction hashes", () => {
   handlePosted(createPostedEvent(3, 2))
   assert.entityCount("Post", 3)
   assert.fieldEquals("Post", "1", "replyTo", "0")
+  assert.fieldEquals("Post", "1", "content", "Post")
+  assert.fieldEquals("Post", "1", "timestamp", "10")
   assert.fieldEquals("Post", "3", "replyTo", "2")
   assert.fieldEquals("Post", "1", "transactionHash", root.transaction.hash.toHexString())
   clearStore()

@@ -1,4 +1,5 @@
 <script>
+  import { CHAIN_NAME, EXPLORER_URL } from "./constants.js";
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
@@ -190,23 +191,12 @@
       </h1>
 
       <div class="flex items-center justify-between sm:justify-end gap-3">
-        <!-- Ethereum mainnet -->
+        <!-- Deployment network -->
         <div
           class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
           style="background-color: #627eea15; border: 1px solid #627eea40; color: #627eea;"
         >
-          <!-- Ethereum Logo SVG -->
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M12 2L6 12L12 15.5L18 12L12 2Z" fill="#627eea" />
-            <path d="M6 13.5L12 17L18 13.5L12 22L6 13.5Z" fill="#627eea" opacity="0.7" />
-          </svg>
-          Ethereum
+          {CHAIN_NAME}
         </div>
 
         <div class="relative" bind:this={walletPickerElement}>
@@ -367,14 +357,14 @@
                     >{formatTime(topic.timestamp)}</span
                   >
                   <a
-                    href="https://etherscan.io/address/{topic.author}"
+                    href="{EXPLORER_URL}/address/{topic.author}"
                     target="_blank"
                     class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300"
                   >
                     {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
                   </a>
                   <a
-                    href="https://etherscan.io/tx/{topic.transactionHash}"
+                    href="{EXPLORER_URL}/tx/{topic.transactionHash}"
                     target="_blank"
                     class="hover:text-gray-700 hover:underline decoration-gray-300"
                     onclick={(e) => e.stopPropagation()}

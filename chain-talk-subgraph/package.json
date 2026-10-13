@@ -4,10 +4,10 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ chain-talk",
-    "create-local": "graph create --node http://localhost:8020/ chain-talk",
-    "remove-local": "graph remove --node http://localhost:8020/ chain-talk",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 chain-talk",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ chain-talk-arbitrum",
+    "create-local": "graph create --node http://localhost:8020/ chain-talk-arbitrum",
+    "remove-local": "graph remove --node http://localhost:8020/ chain-talk-arbitrum",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 chain-talk-arbitrum",
     "test": "graph test"
   },
   "dependencies": {
