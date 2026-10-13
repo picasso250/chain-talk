@@ -1,5 +1,5 @@
 <script>
-  import { CHAIN_NAME, EXPLORER_URL } from "./constants.js";
+  import { CHAIN_NAME, EXPLORER_URL, CONTRACT_ADDRESS, SUBGRAPH_URL } from "./constants.js";
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
@@ -396,5 +396,21 @@
         </article>
       {/each}
     </section>
+
+    <!-- Developer / AI reader info -->
+    <footer class="px-4 py-6 mt-8 border-t border-gray-200 text-xs text-gray-400 font-mono">
+      <details>
+        <summary class="cursor-pointer hover:text-gray-600">开发者 / AI 读取指南</summary>
+        <div class="mt-2 space-y-1">
+          <div>网络: Arbitrum One (chainId 42161)</div>
+          <div>合约: {CONTRACT_ADDRESS}</div>
+          <div>Subgraph: {SUBGRAPH_URL}</div>
+          <div class="mt-2">
+            查询示例: POST {SUBGRAPH_URL}<br/>
+            Body: {'{"query":"{ posts { id replyTo author content timestamp transactionHash } }"}'}
+          </div>
+        </div>
+      </details>
+    </footer>
   </div>
 </main>

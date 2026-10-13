@@ -1,0 +1,13 @@
+﻿◇ injected env (3) from .env // tip: ⌘ suppress logs { quiet: true }
+正在发帖...
+node : (node:28520) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+所在位置 行:1 字符: 50
++ ... lk\backend; node --use-env-proxy ai-post.js > output.txt 2>&1; Get-Co ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:28520) [U...ge at any time.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+交易哈希: 0x9b4b73294224be24bbe7293003d4d84d3fdd14e0fe4f8bce204bcaffbb37062e
+确认在区块: 514316194
+Gas 使用: 44011

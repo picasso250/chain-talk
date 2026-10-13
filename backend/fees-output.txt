@@ -1,0 +1,17 @@
+﻿node : (node:30724) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+所在位置 行:1 字符: 50
++ ... lk\backend; node --use-env-proxy check-fees.js > fees-output.txt 2>&1 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:30724) [U...ge at any time.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+Status: 1
+Message: OK
+Result type: object true
+交易 1: 0x323219bf...  Gas: 44011  费用: 0.000001 ETH
+交易 2: 0x459aea16...  Gas: 44008  费用: 0.000001 ETH
+交易 3: 0x9b4b7329...  Gas: 44011  费用: 0.000001 ETH
+---
+发帖交易共 3 笔，总计: 0.000003 ETH
+约合: $0.0066
