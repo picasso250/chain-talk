@@ -1,6 +1,6 @@
-// Fixed Ethereum mainnet deployment.
-export const CONTRACT_ADDRESS = "0xec3639B4CC756d39e996447dE1787B09EF646b6F";
-export const SUBGRAPH_URL = "https://api.studio.thegraph.com/query/1723159/chain-talk/mainnet-v1";
+// Arbitrum One deployment.
+export const CONTRACT_ADDRESS = "0x6Cb266BB285BA5F6591e449543d259277d57C700";
+export const SUBGRAPH_URL = "https://api.studio.thegraph.com/query/1723159/chain-talk-arbitrum/v0.0.1";
 
 export const CONTRACT_ABI = [
   {

@@ -1,12 +1,12 @@
 {
-  "name": "chain-talk",
+  "name": "chain-talk-arbitrum",
   "compatibility_date": "2024-01-01",
   "assets": {
     "directory": "./dist"
   },
   "routes": [
     {
-      "pattern": "talk.io99.xyz",
+      "pattern": "talka.io99.xyz",
       "custom_domain": true
     }
   ]

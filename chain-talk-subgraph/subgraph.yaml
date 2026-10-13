@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ChainTalk
-    network: mainnet
+    network: arbitrum-one
     source:
-      address: "0xec3639B4CC756d39e996447dE1787B09EF646b6F"
+      address: "0x6Cb266BB285BA5F6591e449543d259277d57C700"
       abi: ChainTalk
-      startBlock: 26111445
+      startBlock: 514306515
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
