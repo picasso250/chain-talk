@@ -248,6 +248,25 @@
     </div>
   </nav>
 
+  <!-- Deployment transparency; this branch is bound to a single chain. -->
+  <div class="max-w-3xl mx-auto px-4 pt-5">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+      <span>Arbitrum One · Contract:</span>
+      <a
+        href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="font-mono break-all text-gray-700 hover:text-green-700 hover:underline"
+      >{CONTRACT_ADDRESS}</a>
+    </div>
+    <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-600">
+      <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Explorer code ↗</a>
+      <a href="https://github.com/picasso250/chain-talk/blob/arbitrum/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity source ↗</a>
+      <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
+      <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum version ↗</a>
+    </div>
+  </div>
+
   <div class="max-w-3xl mx-auto p-4 pt-8">
     <!-- New Topic -->
     <section class="mb-12">

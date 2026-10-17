@@ -1,3 +1,5 @@
+> **历史文档（非当前部署说明）**：本路线图保留早期 Netlify、UUPS 等历史阶段。当前以各分支 README、`frontend/wrangler.jsonc` 与 `frontend/src/constants.js` 为准。
+
 # Chain Talk 开发执行路线
 
 ## 第一阶段：智能合约修改 (已完成)
@@ -95,7 +97,7 @@
 
 ### 步骤16：部署上线 ✅ 已完成
 - [x] 构建生产环境版本 (`npm run build`)
-- [x] 部署至 Netlify (https://chain-talk.netlify.app/)
+- [x] 历史阶段：曾部署至 Netlify（现已退役；当前为 Cloudflare Workers）
 - [x] 验证生产环境公网访问
 
 ## 第六阶段：Phantom钱包兼容性修复 ✅ 已完成
@@ -173,7 +175,7 @@
 - **已完成**：Ethers.js + MetaMask 天然只读特性实现零门槛访问
 - **已完成**：OpenZeppelin UUPS 升级架构改造
 - **已完成**：Arbitrum 主网部署和前端迁移
-- **已完成**：生产环境部署 (https://chain-talk.netlify.app/)
+- **历史记录**：曾部署至 Netlify（已退役），当前网站及发布流程见本分支 README
 - **已完成**：Phantom钱包兼容性修复 (本地数据缓存机制)
 - **已完成**：社区推广 (V2EX发布) + 用户反馈收集
 - **当前阶段**：产品冷启动 (高优先级)
