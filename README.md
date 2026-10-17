@@ -97,6 +97,28 @@ contract ChainTalk {
 
 实际费用取决于内容字节长度、链上状态和交易时的 Gas 价格，以钱包显示的估算为准。主题和回复调用同一个 `post` 函数。
 
+## ☁️ 发布机制（Cloudflare Workers）
+
+当前使用 **Cloudflare Workers + Static Assets**，不使用 Netlify。Cloudflare 后台显示此前发布来源为 Wrangler，且未配置 Git 自动构建触发器，因此 **Git push 不会自动更新线上网站**。
+
+- 当前分支：`main`，站点：https://talk.io99.xyz
+- Worker：`chain-talk`
+- 合约与索引器：`frontend/src/constants.js`
+- Worker 名称、域名和静态资产目录：`frontend/wrangler.jsonc`
+
+从仓库根目录开始，必须确认分支后再部署：
+
+```bash
+git switch main
+git branch --show-current   # 必须输出 main
+cd frontend
+npm ci
+npm run build
+npx wrangler deploy
+```
+
+部署前核查 `frontend/wrangler.jsonc` 的 Worker 和域名是否对应当前分支。另一个分支连接独立的合约与 The Graph 索引，不共享帖子；**不可直接复制对方的网络配置**。
+
 ## 🚀 快速开始
 
 ### 环境要求
@@ -159,10 +181,10 @@ chain-talk/
 │   │   ├── App.svelte        # 主应用组件
 │   │   ├── ReplySection.svelte    # 回复组件
 │   │   ├── MarkdownRenderer.svelte # Markdown 渲染组件
-│   │   ├── constants.js      # 多网络合约配置
+│   │   ├── constants.js      # 本分支 Ethereum 主网配置
 │   │   ├── forum.js          # 数据逻辑（发帖、读取事件）
 │   │   └── wallet.js         # EIP-6963 钱包管理
-│   ├── wrangler.toml         # Worker 配置
+│   ├── wrangler.jsonc         # Worker 配置
 │   └── package.json
 ├── backend/                  # 智能合约
 │   ├── contracts/
