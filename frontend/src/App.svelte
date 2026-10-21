@@ -206,12 +206,12 @@
       <!-- Contract and source links stay visible without taking a second section. -->
       <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-xs text-gray-500">
         <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}" target="_blank" rel="noopener noreferrer" title={CONTRACT_ADDRESS} class="font-mono hover:text-green-700 hover:underline">
-          Contract {CONTRACT_ADDRESS.slice(0, 6)}…{CONTRACT_ADDRESS.slice(-4)} ↗
+          Contract ↗
         </a>
         <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Code ↗</a>
         <a href="https://github.com/picasso250/chain-talk/blob/arbitrum/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity ↗</a>
         <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
-        <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum ↗</a>
+        <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum version ↗</a>
       </div>
 
       <div class="flex items-center gap-3 shrink-0">
