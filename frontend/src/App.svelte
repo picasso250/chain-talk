@@ -194,15 +194,26 @@
   <nav
     class="border-b border-gray-200 p-4 sticky top-0 bg-white/95 backdrop-blur z-10"
   >
-<div class="px-4 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center sm:gap-0">
-      <h1 class="text-xl font-bold text-green-600">
+<div class="px-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <h1 class="text-xl font-bold text-green-600 shrink-0">
         Chain Talk
         <span class="text-xs text-gray-500 font-normal block sm:inline sm:ml-2">
           // Eternal Conversations
         </span>
       </h1>
 
-      <div class="flex items-center justify-between sm:justify-end gap-3">
+      <!-- Contract and source links stay visible without taking a second section. -->
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+        <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}" target="_blank" rel="noopener noreferrer" title={CONTRACT_ADDRESS} class="font-mono hover:text-green-700 hover:underline">
+          Contract {CONTRACT_ADDRESS.slice(0, 6)}…{CONTRACT_ADDRESS.slice(-4)} ↗
+        </a>
+        <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Code ↗</a>
+        <a href="https://github.com/picasso250/chain-talk/blob/arbitrum/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity ↗</a>
+        <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
+        <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum ↗</a>
+      </div>
+
+      <div class="flex items-center gap-3 ml-auto shrink-0">
         <!-- Deployment network -->
         <div
           class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
@@ -259,25 +270,6 @@
       </div>
     </div>
   </nav>
-
-  <!-- Deployment transparency; this branch is bound to a single chain. -->
-  <div class="max-w-3xl mx-auto px-4 pt-5">
-    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-      <span>Arbitrum One · Contract:</span>
-      <a
-        href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="font-mono break-all text-gray-700 hover:text-green-700 hover:underline"
-      >{CONTRACT_ADDRESS}</a>
-    </div>
-    <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-600">
-      <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Explorer code ↗</a>
-      <a href="https://github.com/picasso250/chain-talk/blob/arbitrum/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity source ↗</a>
-      <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
-      <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum version ↗</a>
-    </div>
-  </div>
 
   <div class="max-w-3xl mx-auto p-4 pt-8">
     <!-- New Topic -->
