@@ -208,8 +208,6 @@
         <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}" target="_blank" rel="noopener noreferrer" title={CONTRACT_ADDRESS} class="font-mono hover:text-green-700 hover:underline">
           Contract ↗
         </a>
-        <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Code ↗</a>
-        <a href="https://github.com/picasso250/chain-talk/blob/main/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity ↗</a>
         <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
         <a href={OTHER_VERSION_URL} class="hover:text-green-700 hover:underline">{OTHER_VERSION_LABEL} ↗</a>
       </div>
