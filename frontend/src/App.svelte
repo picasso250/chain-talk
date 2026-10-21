@@ -1,5 +1,5 @@
 <script>
-  import { CONTRACT_ADDRESS } from "./constants.js";
+  import { CHAIN_NAME, CHAIN_ID, EXPLORER_URL, CONTRACT_ADDRESS, SUBGRAPH_URL, OTHER_VERSION_URL, OTHER_VERSION_LABEL } from "./constants.js";
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
@@ -9,6 +9,7 @@
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
   import { formatTime } from "./format.js";
   import { autoResize } from "./autoResize.js";
+  import { track } from "./journey.js";
 
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
@@ -32,11 +33,13 @@
   async function connectWithProvider(provider) {
     if (isConnecting) return;
     isConnecting = true;
+    track("wallet_select");
     try {
       const address = await connectProvider(provider);
       removeWalletListeners();
       walletProvider = provider;
       account = address;
+      track("connect_success");
       removeWalletListeners = watchAccount(provider, address => {
         if (walletProvider !== provider) return;
         if (address === null) disconnectWallet();
@@ -46,6 +49,7 @@
       showWalletPicker = false;
 
     } catch (error) {
+      track("connect_error");
       console.error("Connection failed:", error);
       alert(error.message || "Connection failed.");
     } finally {
@@ -57,6 +61,7 @@
   async function connectWallet() {
     // 已连接时不做任何事
     if (account || isConnecting) return;
+    track("connect_click");
     // 如果检测到多个钱包，显示选择器
     if (detectedWallets.length > 1) {
       showWalletPicker = !showWalletPicker;
@@ -71,6 +76,7 @@
       await connectWithProvider(window.ethereum);
       return;
     }
+    track("no_wallet");
     alert("No wallet detected. Please install MetaMask, Rabby, or any EIP-1193 compatible wallet.");
   }
 
@@ -101,8 +107,10 @@
     }
 
     posting = true;
+    track("topic_attempt");
     try {
       const topic = await postMessage(walletProvider, topicContent);
+      track("topic_confirmed");
       posts = [topic, ...posts.filter(item => item.id !== topic.id)];
 
       topicContent = "";
@@ -110,6 +118,7 @@
       void fetchTopics();
 
     } catch (error) {
+      track("topic_error");
       console.error("Create topic failed:", error);
       alert(error.message || "Unable to submit topic.");
     } finally {
@@ -125,9 +134,12 @@
 
   // 展开/收起主题
   function toggleTopic(topicId) {
+    track("topic_click", topicId);
     if (expandedTopics.has(topicId)) {
+      track("topic_close", topicId);
       expandedTopics.delete(topicId);
     } else {
+      track("topic_open", topicId);
       expandedTopics.add(topicId);
     }
     expandedTopics = new Set(expandedTopics);
@@ -182,32 +194,33 @@
   <nav
     class="border-b border-gray-200 p-4 sticky top-0 bg-white/95 backdrop-blur z-10"
   >
-<div class="px-4 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center sm:gap-0">
-      <h1 class="text-xl font-bold text-green-600">
+<div class="px-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <h1 class="text-xl font-bold text-green-600 shrink-0">
         Chain Talk
         <span class="text-xs text-gray-500 font-normal block sm:inline sm:ml-2">
           // Eternal Conversations
         </span>
       </h1>
 
-      <div class="flex items-center justify-between sm:justify-end gap-3">
-        <!-- Ethereum mainnet -->
+      <div class="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
+      <!-- Contract and source links stay visible without taking a second section. -->
+      <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-xs text-gray-500">
+        <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}" target="_blank" rel="noopener noreferrer" title={CONTRACT_ADDRESS} class="font-mono hover:text-green-700 hover:underline">
+          Contract ↗
+        </a>
+        <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Code ↗</a>
+        <a href="https://github.com/picasso250/chain-talk/blob/main/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity ↗</a>
+        <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
+        <a href={OTHER_VERSION_URL} class="hover:text-green-700 hover:underline">{OTHER_VERSION_LABEL} ↗</a>
+      </div>
+
+      <div class="flex items-center gap-3 shrink-0">
+        <!-- Deployment network -->
         <div
           class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
           style="background-color: #627eea15; border: 1px solid #627eea40; color: #627eea;"
         >
-          <!-- Ethereum Logo SVG -->
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M12 2L6 12L12 15.5L18 12L12 2Z" fill="#627eea" />
-            <path d="M6 13.5L12 17L18 13.5L12 22L6 13.5Z" fill="#627eea" opacity="0.7" />
-          </svg>
-          Ethereum
+          {CHAIN_NAME}
         </div>
 
         <div class="relative" bind:this={walletPickerElement}>
@@ -256,27 +269,9 @@
           {/if}
         </div>
       </div>
+      </div>
     </div>
   </nav>
-
-  <!-- Deployment transparency; this branch is bound to a single chain. -->
-  <div class="max-w-3xl mx-auto px-4 pt-5">
-    <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-      <span>Ethereum Mainnet · Contract:</span>
-      <a
-        href="https://etherscan.io/address/{CONTRACT_ADDRESS}"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="font-mono break-all text-gray-700 hover:text-green-700 hover:underline"
-      >{CONTRACT_ADDRESS}</a>
-    </div>
-    <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-600">
-      <a href="https://etherscan.io/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Explorer code ↗</a>
-      <a href="https://github.com/picasso250/chain-talk/blob/main/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity source ↗</a>
-      <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
-      <a href="https://talka.io99.xyz/" class="hover:text-green-700 hover:underline">Arbitrum version ↗</a>
-    </div>
-  </div>
 
   <div class="max-w-3xl mx-auto p-4 pt-8">
     <!-- New Topic -->
@@ -382,19 +377,18 @@
                     </span>
                   {/if}
                 </div>
-                <div class="flex items-center gap-3 text-xs text-gray-500">
-                  <span class="text-green-600 font-medium"
-                    >{formatTime(topic.timestamp)}</span
-                  >
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                  <span class="font-mono text-gray-400">#{topic.id}</span>
+                  <span class="text-green-600 font-medium">{formatTime(topic.timestamp)}</span>
                   <a
-                    href="https://etherscan.io/address/{topic.author}"
+                    href="{EXPLORER_URL}/address/{topic.author}"
                     target="_blank"
                     class="font-mono text-xs hover:text-gray-700 hover:underline decoration-gray-300"
                   >
                     {topic.author.slice(0, 6)}...{topic.author.slice(-4)}
                   </a>
                   <a
-                    href="https://etherscan.io/tx/{topic.transactionHash}"
+                    href="{EXPLORER_URL}/tx/{topic.transactionHash}"
                     target="_blank"
                     class="hover:text-gray-700 hover:underline decoration-gray-300"
                     onclick={(e) => e.stopPropagation()}
@@ -426,5 +420,21 @@
         </article>
       {/each}
     </section>
+
+    <!-- Developer / AI reader info -->
+    <footer class="px-4 py-6 mt-8 border-t border-gray-200 text-xs text-gray-400 font-mono">
+      <details>
+        <summary class="cursor-pointer hover:text-gray-600">开发者 / AI 读取指南</summary>
+        <div class="mt-2 space-y-1">
+          <div>网络: {CHAIN_NAME} (chainId {CHAIN_ID})</div>
+          <div>合约: {CONTRACT_ADDRESS}</div>
+          <div>Subgraph: {SUBGRAPH_URL}</div>
+          <div class="mt-2">
+            查询示例: POST {SUBGRAPH_URL}<br/>
+            Body: {'{"query":"{ posts { id replyTo author content timestamp transactionHash } }"}'}
+          </div>
+        </div>
+      </details>
+    </footer>
   </div>
 </main>

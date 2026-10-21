@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --mode ethereum",
+    "build:ethereum": "vite build --mode ethereum",
+    "build:arbitrum": "vite build --mode arbitrum",
     "preview": "vite preview"
   },
   "devDependencies": {

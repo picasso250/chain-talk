@@ -1,8 +1,10 @@
 <script>
+  import { EXPLORER_URL } from "./constants.js";
   import { postMessage } from "./forum.js";
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
   import { formatTime } from "./format.js";
   import { autoResize } from "./autoResize.js";
+  import { track } from "./journey.js";
 
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
@@ -16,13 +18,16 @@
     if (submitting || !replyContent.trim()) return;
 
     submitting = true;
+    track("reply_attempt");
     try {
       const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId);
+      track("reply_confirmed");
       onReplyCreated(reply);
       replyContent = "";
       isPreviewMode = false;
       replyTarget = null;
     } catch (error) {
+      track("reply_error");
       console.error("Create reply failed:", error);
       alert(error.message || "Unable to submit reply.");
     } finally {
@@ -52,11 +57,11 @@
         <div id={`post-${reply.id}`} class="pl-4 border-l-2 border-gray-300 hover:border-green-400 transition-colors ml-2">
         <div class="flex items-center gap-3 text-xs text-gray-500 mb-2">
           <span class="text-green-600 font-bold">{formatTime(reply.timestamp)}</span>
-          <a href={`https://etherscan.io/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
+          <a href={`${EXPLORER_URL}/address/${reply.author}`} target="_blank" class="font-mono hover:text-gray-700 hover:underline decoration-gray-300" title={reply.author}>
             {reply.author.slice(0, 6)}...{reply.author.slice(-4)}
           </a>
           <a
-            href={`https://etherscan.io/tx/${reply.transactionHash}`}
+            href={`${EXPLORER_URL}/tx/${reply.transactionHash}`}
             target="_blank"
             class="hover:text-gray-700 hover:underline decoration-gray-300"
           >
