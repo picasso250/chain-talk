@@ -7,6 +7,7 @@ function harness() {
   const rows=[];
   const stored=[];
   const env={
+    SITE:'arbitrum',
     JOURNEY_DB:{prepare(sql){return {bind(...args){return {async run(){stored.push({sql,args});}};}};}},
     JOURNEY:{writeDataPoint(row){rows.push(row);}},
     ASSETS:{fetch:()=>new Response('static site')}
@@ -58,6 +59,12 @@ test('Ethereum deployment stores events in a different table',async()=>{
   env.SITE='ethereum';
   assert.equal((await send({session,event:'topic_click',post_id:'5',step:7})).status,204);
   assert.match(stored[0].sql,/INSERT OR IGNORE INTO talk_events /);
+});
+test('a missing site configuration fails closed before a D1 write',async()=>{
+  const {send,env,stored}=harness();
+  delete env.SITE;
+  assert.equal((await send({session,event:'page_view',step:1})).status,503);
+  assert.equal(stored.length,0);
 });
 test('non-API routes use Worker static asset binding',async()=>{
   const {env}=harness();

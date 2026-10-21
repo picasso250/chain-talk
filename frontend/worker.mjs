@@ -1,4 +1,4 @@
-// Single-tab anonymous experience analytics for talka.io99.xyz.
+// Anonymous experience analytics: separate D1 tables for Ethereum and Arbitrum.
 const events = new Set(['page_view','page_exit','topic_click','topic_open','topic_close','connect_click','wallet_select','connect_success','connect_error','no_wallet','topic_attempt','topic_confirmed','topic_error','reply_attempt','reply_confirmed','reply_error']);
 export default {
   async fetch(request, env) {
@@ -15,7 +15,7 @@ export default {
         !events.has(data.event) || !Number.isInteger(data.step) || data.step < 1 || data.step > 1000 ||
         (isTopicEvent && (typeof data.post_id !== 'string' || !/^[1-9][0-9]{0,77}$/.test(data.post_id))))
       return new Response('Invalid event',{status:400});
-    if (!env.JOURNEY || !env.JOURNEY_DB || !['ethereum', 'arbitrum'].includes(env.SITE ?? 'arbitrum')) return new Response('Analytics unavailable',{status:503});
+    if (!env.JOURNEY || !env.JOURNEY_DB || !['ethereum', 'arbitrum'].includes(env.SITE)) return new Response('Analytics unavailable',{status:503});
     const table = env.SITE === 'ethereum' ? 'talk_events' : 'talka_events';
     try {
       await env.JOURNEY_DB.prepare(`INSERT OR IGNORE INTO ${table} (session, step, event, post_id) VALUES (?, ?, ?, ?)`)

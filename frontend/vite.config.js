@@ -5,7 +5,8 @@ import { CHAINS } from './config/chains.js'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const chain = CHAINS[mode === 'ethereum' ? 'ethereum' : 'arbitrum'];
+  if (mode !== 'ethereum' && mode !== 'arbitrum') throw new Error(`Explicit chain build mode required; received: ${mode}`);
+  const chain = CHAINS[mode];
   return {
     plugins: [
       tailwindcss(),

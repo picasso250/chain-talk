@@ -16,7 +16,14 @@ Both sites use the same D1 database `talka-journey`, each writing to its **own**
 
 ## Cloudflare Git integration — both Workers
 
-For each existing Worker, set GitHub repo `picasso250/chain-talk`, branch `main`, root directory `frontend`. Choose build and deploy commands from the table above. The root `frontend/wrangler.jsonc` and `npm run build` also default to Ethereum for compatibility with the existing mainnet Git workflow.
+For **each existing Worker**, set GitHub repo `picasso250/chain-talk`, production branch `main`, and root directory `frontend`. In Cloudflare Builds, set the commands **independently**:
+
+- **chain-talk (Ethereum)** — Build: `npm run build:ethereum`; Deploy: `npx wrangler deploy -c wrangler.ethereum.jsonc`
+- **chain-talk-arbitrum (Arbitrum)** — Build: `npm run build:arbitrum`; Deploy: `npx wrangler deploy -c wrangler.arbitrum.jsonc`
+
+Do not use a common deploy command or select the wrong Wrangler file. The root `frontend/wrangler.jsonc` and `npm run build` default to Ethereum only for backwards compatibility.
+
+**Migration handoff:** Local changes can be committed safely; hold the Git `push` until *both* Cloudflare Workers have the exact settings above. Then one push to `main` triggers two independent Git builds. Do not manually deploy as part of this handoff.
 
 **Rollout warning:** Do not point the Arbitrum Worker at `main` before main contains the unified code and the build/deploy commands are set to Arbitrum. Do not point Ethereum's deploy at the Arbitrum Wrangler file.
 
