@@ -134,11 +134,12 @@
 
   // 展开/收起主题
   function toggleTopic(topicId) {
+    track("topic_click", topicId);
     if (expandedTopics.has(topicId)) {
-      track("topic_close");
+      track("topic_close", topicId);
       expandedTopics.delete(topicId);
     } else {
-      track("topic_open");
+      track("topic_open", topicId);
       expandedTopics.add(topicId);
     }
     expandedTopics = new Set(expandedTopics);
@@ -382,10 +383,9 @@
                     </span>
                   {/if}
                 </div>
-                <div class="flex items-center gap-3 text-xs text-gray-500">
-                  <span class="text-green-600 font-medium"
-                    >{formatTime(topic.timestamp)}</span
-                  >
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                  <span class="font-mono text-gray-400">#{topic.id}</span>
+                  <span class="text-green-600 font-medium">{formatTime(topic.timestamp)}</span>
                   <a
                     href="{EXPLORER_URL}/address/{topic.author}"
                     target="_blank"
