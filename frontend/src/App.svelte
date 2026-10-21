@@ -9,6 +9,7 @@
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
   import { formatTime } from "./format.js";
   import { autoResize } from "./autoResize.js";
+  import { track } from "./journey.js";
 
   // EIP-6963 钱包管理
   let detectedWallets = $state([]);
@@ -32,11 +33,13 @@
   async function connectWithProvider(provider) {
     if (isConnecting) return;
     isConnecting = true;
+    track("wallet_select");
     try {
       const address = await connectProvider(provider);
       removeWalletListeners();
       walletProvider = provider;
       account = address;
+      track("connect_success");
       removeWalletListeners = watchAccount(provider, address => {
         if (walletProvider !== provider) return;
         if (address === null) disconnectWallet();
@@ -46,6 +49,7 @@
       showWalletPicker = false;
 
     } catch (error) {
+      track("connect_error");
       console.error("Connection failed:", error);
       alert(error.message || "Connection failed.");
     } finally {
@@ -57,6 +61,7 @@
   async function connectWallet() {
     // 已连接时不做任何事
     if (account || isConnecting) return;
+    track("connect_click");
     // 如果检测到多个钱包，显示选择器
     if (detectedWallets.length > 1) {
       showWalletPicker = !showWalletPicker;
@@ -71,6 +76,7 @@
       await connectWithProvider(window.ethereum);
       return;
     }
+    track("no_wallet");
     alert("No wallet detected. Please install MetaMask, Rabby, or any EIP-1193 compatible wallet.");
   }
 
@@ -101,8 +107,10 @@
     }
 
     posting = true;
+    track("topic_attempt");
     try {
       const topic = await postMessage(walletProvider, topicContent);
+      track("topic_confirmed");
       posts = [topic, ...posts.filter(item => item.id !== topic.id)];
 
       topicContent = "";
@@ -110,6 +118,7 @@
       void fetchTopics();
 
     } catch (error) {
+      track("topic_error");
       console.error("Create topic failed:", error);
       alert(error.message || "Unable to submit topic.");
     } finally {
@@ -126,8 +135,10 @@
   // 展开/收起主题
   function toggleTopic(topicId) {
     if (expandedTopics.has(topicId)) {
+      track("topic_close");
       expandedTopics.delete(topicId);
     } else {
+      track("topic_open");
       expandedTopics.add(topicId);
     }
     expandedTopics = new Set(expandedTopics);

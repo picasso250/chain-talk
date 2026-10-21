@@ -4,6 +4,7 @@
   import MarkdownRenderer from "./MarkdownRenderer.svelte";
   import { formatTime } from "./format.js";
   import { autoResize } from "./autoResize.js";
+  import { track } from "./journey.js";
 
   let { topicId, account, walletProvider = null, replies = [], onReplyCreated } = $props();
 
@@ -17,13 +18,16 @@
     if (submitting || !replyContent.trim()) return;
 
     submitting = true;
+    track("reply_attempt");
     try {
       const reply = await postMessage(walletProvider, replyContent, replyTarget ?? topicId);
+      track("reply_confirmed");
       onReplyCreated(reply);
       replyContent = "";
       isPreviewMode = false;
       replyTarget = null;
     } catch (error) {
+      track("reply_error");
       console.error("Create reply failed:", error);
       alert(error.message || "Unable to submit reply.");
     } finally {
