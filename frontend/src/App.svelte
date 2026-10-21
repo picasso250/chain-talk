@@ -1,5 +1,5 @@
 <script>
-  import { CHAIN_NAME, EXPLORER_URL, CONTRACT_ADDRESS, SUBGRAPH_URL } from "./constants.js";
+  import { CHAIN_NAME, CHAIN_ID, EXPLORER_URL, CONTRACT_ADDRESS, SUBGRAPH_URL, OTHER_VERSION_URL, OTHER_VERSION_LABEL } from "./constants.js";
   import { onMount } from "svelte";
   import { slide } from "svelte/transition";
   import { discoverWallets, connectProvider, watchAccount } from "./wallet.js";
@@ -209,9 +209,9 @@
           Contract ↗
         </a>
         <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}#code" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Code ↗</a>
-        <a href="https://github.com/picasso250/chain-talk/blob/arbitrum/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity ↗</a>
+        <a href="https://github.com/picasso250/chain-talk/blob/main/backend/contracts/ChainTalk.sol" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">Solidity ↗</a>
         <a href="https://github.com/picasso250/chain-talk" target="_blank" rel="noopener noreferrer" class="hover:text-green-700 hover:underline">GitHub ↗</a>
-        <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum version ↗</a>
+        <a href={OTHER_VERSION_URL} class="hover:text-green-700 hover:underline">{OTHER_VERSION_LABEL} ↗</a>
       </div>
 
       <div class="flex items-center gap-3 shrink-0">
@@ -426,7 +426,7 @@
       <details>
         <summary class="cursor-pointer hover:text-gray-600">开发者 / AI 读取指南</summary>
         <div class="mt-2 space-y-1">
-          <div>网络: Arbitrum One (chainId 42161)</div>
+          <div>网络: {CHAIN_NAME} (chainId {CHAIN_ID})</div>
           <div>合约: {CONTRACT_ADDRESS}</div>
           <div>Subgraph: {SUBGRAPH_URL}</div>
           <div class="mt-2">

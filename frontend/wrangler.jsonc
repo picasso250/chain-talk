@@ -1,18 +1,14 @@
 {
-  "name": "chain-talk-arbitrum",
+  "name": "chain-talk",
   "compatibility_date": "2024-01-01",
   "main": "./worker.mjs",
-  "analytics_engine_datasets": [{ "binding": "JOURNEY", "dataset": "talka_journey" }],
+  "vars": { "SITE": "ethereum" },
+  "analytics_engine_datasets": [{ "binding": "JOURNEY", "dataset": "talk_journey" }],
   "d1_databases": [{ "binding": "JOURNEY_DB", "database_name": "talka-journey", "database_id": "2bd18c7b-93c4-40c4-b653-8e7e2d074050" }],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "run_worker_first": ["/api/journey"]
   },
-  "routes": [
-    {
-      "pattern": "talka.io99.xyz",
-      "custom_domain": true
-    }
-  ]
+  "routes": [{ "pattern": "talk.io99.xyz", "custom_domain": true }]
 }

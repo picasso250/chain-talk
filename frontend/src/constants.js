@@ -1,9 +1,8 @@
-// Arbitrum One deployment.
-export const CHAIN_ID = 42161;
-export const CHAIN_NAME = "Arbitrum One";
-export const EXPLORER_URL = "https://arbiscan.io";
-export const CONTRACT_ADDRESS = "0x6Cb266BB285BA5F6591e449543d259277d57C700";
-export const SUBGRAPH_URL = "https://api.studio.thegraph.com/query/1723159/chain-talk-arbitrum/v0.0.1";
+// Vite injects exactly one chain configuration; Node tests default to Arbitrum.
+import { CHAINS } from "../config/chains.js";
+const chain = typeof __DEPLOYMENT__ === 'undefined' ? CHAINS.arbitrum : __DEPLOYMENT__;
+export const { CHAIN_ID, CHAIN_NAME, EXPLORER_URL, CONTRACT_ADDRESS, SUBGRAPH_URL,
+  OTHER_VERSION_URL, OTHER_VERSION_LABEL } = chain;
 
 export const CONTRACT_ABI = [
   {

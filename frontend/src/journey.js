@@ -1,10 +1,11 @@
 // One-tab, privacy-aware event sequence; no account, text, amount or transaction hashes.
+import { CHAIN_ID } from './constants.js';
 const events = new Set([
   'page_view','page_exit','topic_click','topic_open','topic_close','connect_click','wallet_select',
   'connect_success','connect_error','no_wallet','topic_attempt','topic_confirmed',
   'topic_error','reply_attempt','reply_confirmed','reply_error'
 ]);
-const storageKey = 'talka_journey_v1';
+const storageKey = `chain-talk_${CHAIN_ID}_journey_v1`;
 let state = null;
 if (typeof window !== 'undefined' && navigator.globalPrivacyControl !== true && navigator.doNotTrack !== '1') {
   try {

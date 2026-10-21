@@ -53,6 +53,12 @@ test('D1 failure prevents a misleading successful response and Analytics Engine 
   assert.equal((await send({session,event:'connect_click',step:2})).status,503);
   assert.equal(rows.length,0);
 });
+test('Ethereum deployment stores events in a different table',async()=>{
+  const {send,stored,env}=harness();
+  env.SITE='ethereum';
+  assert.equal((await send({session,event:'topic_click',post_id:'5',step:7})).status,204);
+  assert.match(stored[0].sql,/INSERT OR IGNORE INTO talk_events /);
+});
 test('non-API routes use Worker static asset binding',async()=>{
   const {env}=harness();
   assert.equal(await (await worker.fetch(new Request('https://talka.io99.xyz/'),env)).text(),'static site');

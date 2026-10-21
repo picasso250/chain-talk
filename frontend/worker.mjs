@@ -15,9 +15,10 @@ export default {
         !events.has(data.event) || !Number.isInteger(data.step) || data.step < 1 || data.step > 1000 ||
         (isTopicEvent && (typeof data.post_id !== 'string' || !/^[1-9][0-9]{0,77}$/.test(data.post_id))))
       return new Response('Invalid event',{status:400});
-    if (!env.JOURNEY || !env.JOURNEY_DB) return new Response('Analytics unavailable',{status:503});
+    if (!env.JOURNEY || !env.JOURNEY_DB || !['ethereum', 'arbitrum'].includes(env.SITE ?? 'arbitrum')) return new Response('Analytics unavailable',{status:503});
+    const table = env.SITE === 'ethereum' ? 'talk_events' : 'talka_events';
     try {
-      await env.JOURNEY_DB.prepare('INSERT OR IGNORE INTO talka_events (session, step, event, post_id) VALUES (?, ?, ?, ?)')
+      await env.JOURNEY_DB.prepare(`INSERT OR IGNORE INTO ${table} (session, step, event, post_id) VALUES (?, ?, ?, ?)`)
         .bind(data.session, data.step, data.event, isTopicEvent ? data.post_id : null).run();
     } catch { return new Response('Event storage unavailable',{status:503}); }
     env.JOURNEY.writeDataPoint({blobs:[data.session,data.event],doubles:[data.step],indexes:[data.session]});
