@@ -26,3 +26,10 @@ body {
 #app {
   width: 100%;
 }
+
+/* Keep markdown links recognizable without heavy underlines. */
+.prose a {
+  text-decoration-color: rgb(0 0 0 / 25%);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}

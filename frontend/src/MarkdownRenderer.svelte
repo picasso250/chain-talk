@@ -9,6 +9,6 @@
   const htmlContent = $derived(DOMPurify.sanitize(marked.parse(content)));
 </script>
 
-<div class="prose">
+<div class="prose max-w-none">
   {@html htmlContent}
 </div>
