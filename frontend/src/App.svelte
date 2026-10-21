@@ -202,8 +202,9 @@
         </span>
       </h1>
 
+      <div class="ml-auto flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
       <!-- Contract and source links stay visible without taking a second section. -->
-      <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+      <div class="flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-xs text-gray-500">
         <a href="{EXPLORER_URL}/address/{CONTRACT_ADDRESS}" target="_blank" rel="noopener noreferrer" title={CONTRACT_ADDRESS} class="font-mono hover:text-green-700 hover:underline">
           Contract {CONTRACT_ADDRESS.slice(0, 6)}…{CONTRACT_ADDRESS.slice(-4)} ↗
         </a>
@@ -213,7 +214,7 @@
         <a href="https://talk.io99.xyz/" class="hover:text-green-700 hover:underline">Ethereum ↗</a>
       </div>
 
-      <div class="flex items-center gap-3 ml-auto shrink-0">
+      <div class="flex items-center gap-3 shrink-0">
         <!-- Deployment network -->
         <div
           class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
@@ -267,6 +268,7 @@
             </div>
           {/if}
         </div>
+      </div>
       </div>
     </div>
   </nav>
